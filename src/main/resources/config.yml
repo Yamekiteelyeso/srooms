@@ -1,0 +1,5 @@
+selection:
+  max-zone-volume: 250000
+  max-gate-volume: 4096
+duel:
+  gate-material: GLASS
