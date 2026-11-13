@@ -584,6 +584,11 @@ public final class DuelManager {
         }
         boolean played = match.phase == Phase.FIGHT;
         UUID winner = DuelOutcome.winner(played, match.first, match.second, loser);
+        if (played && match.second != null) {
+            String name = winner == null ? "" : winner.equals(match.first)
+                    ? match.firstName : match.secondName;
+            plugin.history().record(match.room, match.firstName, match.secondName, name);
+        }
         if (loser != null && winner != null) {
             Player win = Bukkit.getPlayer(winner), lose = Bukkit.getPlayer(loser);
             String winnerName = winner.equals(match.first) ? match.firstName : match.secondName;
