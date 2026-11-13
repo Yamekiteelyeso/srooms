@@ -32,6 +32,7 @@ public final class Room {
     private boolean healOnJoin = true;
     private boolean clearEffects = true;
     private int countdown = 5;
+    private int reopenDelay = 10;
     private final Map<String, Integer> effectLevels = new LinkedHashMap<>();
 
     public Room(String name, Cuboid a, Cuboid b, Cuboid gate) {
@@ -73,6 +74,8 @@ public final class Room {
     public void clearEffects(boolean value) { clearEffects = value; }
     public int countdown() { return countdown; }
     public void countdown(int seconds) { countdown = Math.max(1, Math.min(30, seconds)); }
+    public int reopenDelay() { return reopenDelay; }
+    public void reopenDelay(int seconds) { reopenDelay = Math.max(0, Math.min(300, seconds)); }
     public Map<String, Integer> effects() { return effectLevels; }
     public int effectLevel(String key) { return effectLevels.getOrDefault(key, 0); }
     public void cycleEffect(String key) {
