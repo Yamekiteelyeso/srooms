@@ -79,3 +79,6 @@ top-title: '&b&lTop 10 &8» &7Jugadores con más victorias'
 top-entry: '&e#%rank% &f%player% &8• &a%wins% victorias &8• &7Racha: &f%streak%'
 duel-draw: '&e¡EMPATE! &7%a% y %b% agotaron el tiempo en &b%room%&7.'
 timer-title: '&b&l1v1 &8• &f%seconds% segundos restantes'
+
+# SRooms 1.2 - seguridad de construcción
+build-limit: '&cNo puedes modificar ese bloque. &7Límite de cambios alcanzado o bloque protegido.'
