@@ -1,4 +1,4 @@
-# SRooms 1.1 | Personaliza todos los mensajes de chat.
+# SRooms 1.3 | Personaliza todos los mensajes de chat.
 # Colores Minecraft: &0 - &f, &l (negrita), &r (reiniciar).
 # Variables disponibles según mensaje: %room%, %winner%, %loser%, %seconds%, %players%, %status%, %keep%, %point%, %stage%, %coords%, %reason%.
 prefix: '&8[&b&lSRooms&8] &7'
@@ -90,3 +90,21 @@ room-check-ok: '&aLa room &f%room% &apasó las comprobaciones: regiones, spawns 
 room-check-error: '&cRoom &f%room%&c: &7%reason%'
 room-repaired: '&aSe restauraron los bloques originales de la barrera de &f%room%&a.'
 room-no-recovery: '&eNo hay ninguna barrera pendiente de recuperación en &f%room%&e.'
+
+# 1.3.0 - Kits, espera, seguridad y administración
+usage-kit: '&cUso: &f/srooms kit <save|clear|info> <room>'
+kit-saved: '&aKit de &f%room% &aguardado. &7Actívalo en /srooms roomconfig.'
+kit-cleared: '&aKit de &f%room% &aeliminado y desactivado.'
+kit-info: '&bKit %room% &8» &7Guardado: &f%saved% &8| &7Activo: &f%enabled%'
+kit-missing: '&cLa room &f%room% &cno tiene un kit guardado. Usa &f/srooms kit save %room%&c.'
+kit-save-failed: '&cNo fue posible guardar el kit. Revisa la consola y permisos del disco.'
+kit-apply-failed: '&cNo se pudo iniciar el combate con kit. No se modificó tu inventario.'
+kit-recovered: '&aSe recuperó tu inventario original tras la partida anterior.'
+kit-recovery-pending: '&cTienes un inventario pendiente de recuperar. Contacta con un administrador si persiste.'
+kit-containers-blocked: '&cNo puedes transferir objetos del kit a contenedores.'
+waiting-expired: '&eNo llegó ningún rival a tiempo. Se canceló la espera en &f%room%&e.'
+exit-saved: '&aSe estableció tu posición como salida segura de las arenas.'
+exit-inside-room: '&cLa salida debe estar fuera de cualquier room.'
+usage-reset: '&cUso: &f/srooms reset <room>'
+room-reset: '&aRoom &f%room% &areiniciada. Jugadores devueltos a su posición anterior.'
+room-already-idle: '&eLa room &f%room% &eya está libre y no necesita reinicio.'
