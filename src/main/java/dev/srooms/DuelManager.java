@@ -9,6 +9,8 @@ import org.bukkit.boss.BarColor;
 import org.bukkit.boss.BarStyle;
 import org.bukkit.World;
 import org.bukkit.block.Block;
+import org.bukkit.block.data.BlockData;
+import org.bukkit.block.TileState;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
@@ -64,6 +66,7 @@ public final class DuelManager {
         BukkitTask countdownTask;
         BukkitTask combatTask;
         BossBar timerBar;
+        final Map<String, BlockData> changedBlocks = new LinkedHashMap<>();
         Match(Room room, Player first) {
             this.room = room;
             this.first = first.getUniqueId();
@@ -85,6 +88,36 @@ public final class DuelManager {
         this.plugin = plugin;
         recoveryFile = new File(plugin.getDataFolder(), "gate-recovery.yml");
         restoreAllRecovery();
+    }
+
+    public boolean recordWorldEdit(Player player, Block block, BlockData original) {
+        Match match = players.get(player.getUniqueId());
+        if (match == null || match.phase != Phase.FIGHT || !match.room.allowBuild()
+                || !match.room.contains(block.getLocation()) || match.room.gate().contains(block.getLocation())
+                || block.getState() instanceof TileState) return false;
+        String key = block.getX() + "_" + block.getY() + "_" + block.getZ();
+        if (!match.changedBlocks.containsKey(key)) {
+            int maximum = Math.max(1, plugin.getConfig().getInt("protection.max-edited-blocks", 4096));
+            if (match.changedBlocks.size() >= maximum) return false;
+            match.changedBlocks.put(key, original.clone());
+        }
+        return true;
+    }
+
+    private void restoreWorldEdits(Match match) {
+        if (match.changedBlocks.isEmpty()) return;
+        World world = match.room.a().world();
+        if (world == null) return;
+        for (Map.Entry<String, BlockData> edit : match.changedBlocks.entrySet()) {
+            try {
+                String[] xyz = edit.getKey().split("_");
+                world.getBlockAt(Integer.parseInt(xyz[0]), Integer.parseInt(xyz[1]),
+                        Integer.parseInt(xyz[2])).setBlockData(edit.getValue(), false);
+            } catch (Exception ex) {
+                plugin.getLogger().warning("No se pudo restaurar bloque en " + edit.getKey() + ": " + ex.getMessage());
+            }
+        }
+        match.changedBlocks.clear();
     }
 
     public boolean isPlaying(Player player) { return players.containsKey(player.getUniqueId()); }
@@ -492,6 +525,7 @@ public final class DuelManager {
             Player online = Bukkit.getPlayer(id);
             if (online != null) restorePlayer(online, snapshot, true);
         }
+        restoreWorldEdits(match);
         if (winner == null && played) {
             if (plugin.getConfig().getBoolean("announcements.broadcast-results", true))
                 plugin.broadcast("duel-draw", "room", match.room.name(),
