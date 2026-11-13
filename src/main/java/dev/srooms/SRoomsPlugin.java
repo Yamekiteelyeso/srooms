@@ -21,6 +21,7 @@ public final class SRoomsPlugin extends JavaPlugin {
     private DuelManager duels;
     private ConfigMenu menu;
     private StatsManager stats;
+    private KitManager kits;
     private RoomsBrowser browser;
 
     @Override
@@ -74,6 +75,7 @@ public final class SRoomsPlugin extends JavaPlugin {
         }
         registry = new RoomRegistry(this);
         stats = new StatsManager(this);
+        kits = new KitManager(this);
         selections = new SelectionManager(this);
         duels = new DuelManager(this);
         menu = new ConfigMenu(this);
@@ -102,10 +104,12 @@ public final class SRoomsPlugin extends JavaPlugin {
     public DuelManager duels() { return duels; }
     public ConfigMenu menu() { return menu; }
     public StatsManager stats() { return stats; }
+    public KitManager kits() { return kits; }
     public RoomsBrowser browser() { return browser; }
 
     public void reloadSettings() {
         reloadConfig();
+        if (kits != null) kits.reload();
         messages = YamlConfiguration.loadConfiguration(new File(getDataFolder(), "messages.yml"));
         try (InputStreamReader reader = new InputStreamReader(
                 Objects.requireNonNull(getResource("messages.yml")), StandardCharsets.UTF_8)) {
