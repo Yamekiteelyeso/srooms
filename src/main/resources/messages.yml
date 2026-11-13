@@ -19,7 +19,7 @@ gate-unsafe: '&cEl cristal seleccionado contiene bloques con datos. Cámbialo.'
 
 # Ayuda
 help-title: '&b&lSRooms &8» &fCentro de comandos &7(1v1)'
-help-player: '&7/srooms list &8• &flistar &8| &7/srooms join <room> &8• &fentrar &8| &7/srooms leave &8• &fsalir &8| &7/srooms stats &8• &festadísticas &8| &7/srooms top &8• &ftop'
+help-player: '&7/srooms gui &8• &fmenú &8| &7/srooms list &8• &flistar &8| &7/srooms join <room> &8• &fentrar &8| &7/srooms leave &8• &fsalir &8| &7/srooms stats &8• &festadísticas &8| &7/srooms top &8• &ftop'
 help-admin: '&7/srooms createroom &8• &fcrear &8| &7/srooms nameroom <nombre> &8• &fguardar &8| &7/srooms roomconfig <room> &8• &fconfigurar'
 help-admin-two: '&7/srooms deleteroom <room> &8• &feliminar &8| &7/srooms reopen <room> <segundos> &8• &freapertura &8| &7/srooms duration <room> <segundos> &8• &ftiempo &8| &7/srooms reload &8• &frecargar'
 usage-name: '&cUso: &f/srooms nameroom <nombre>'
