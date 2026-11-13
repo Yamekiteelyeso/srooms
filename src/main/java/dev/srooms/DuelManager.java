@@ -63,6 +63,7 @@ public final class DuelManager {
         UUID second;
         String secondName;
         Phase phase = Phase.WAITING;
+        BukkitTask waitingTask;
         BukkitTask countdownTask;
         BukkitTask combatTask;
         BossBar timerBar;
@@ -158,6 +159,14 @@ public final class DuelManager {
     public void join(Player player, Room room) {
         if (!room.enabled()) { plugin.msg(player, "room-disabled", "room", room.name()); return; }
         if (isPlaying(player)) { plugin.msg(player, "already-in-room"); return; }
+        if (plugin.kits().pending(player)) {
+            plugin.msg(player, "kit-recovery-pending");
+            return;
+        }
+        if (room.kitEnabled() && !plugin.kits().hasKit(room)) {
+            plugin.msg(player, "kit-missing", "room", room.name());
+            return;
+        }
         String key = roomKey(room);
         if (reopeningAt.containsKey(key)) {
             plugin.msg(player, "room-reopening", "room", room.name(),
@@ -202,6 +211,23 @@ public final class DuelManager {
             plugin.msg(player, "selection-invalid", "reason", "No fue posible teletransportarte al spawn.");
             return;
         }
+        boolean kitApplied;
+        try {
+            kitApplied = plugin.kits().apply(player, room, beforeTeleport.location);
+        } catch (RuntimeException ex) {
+            plugin.getLogger().severe("Error aplicando kit de " + room.name() + ": " + ex.getMessage());
+            plugin.kits().restore(player, false);
+            kitApplied = false;
+        }
+        if (!kitApplied) {
+            player.teleport(beforeTeleport.location);
+            if (match.first.equals(player.getUniqueId()) && !players.containsKey(match.first)) {
+                matches.remove(key);
+                restoreGate(room);
+            }
+            plugin.msg(player, "kit-apply-failed");
+            return;
+        }
         snapshots.put(player.getUniqueId(), beforeTeleport);
         players.put(player.getUniqueId(), match);
         player.setGameMode(GameMode.SURVIVAL);
@@ -212,6 +238,7 @@ public final class DuelManager {
         ejectIntruders(room);
         if (match.first.equals(player.getUniqueId())) {
             plugin.msg(player, "joined-wait", "room", room.name());
+            startWaitingTimer(match);
         } else {
             match.second = player.getUniqueId();
             match.secondName = player.getName();
@@ -239,7 +266,20 @@ public final class DuelManager {
         }
     }
 
+    private void startWaitingTimer(Match match) {
+        int seconds = Math.max(0, Math.min(3600,
+                plugin.getConfig().getInt("duel.waiting-timeout-seconds", 120)));
+        if (seconds == 0) return;
+        match.waitingTask = Bukkit.getScheduler().runTaskLater(plugin, () -> {
+            if (matches.get(roomKey(match.room)) != match || match.second != null) return;
+            Player first = Bukkit.getPlayer(match.first);
+            if (first != null) plugin.msg(first, "waiting-expired", "room", match.room.name());
+            finish(match, null, false);
+        }, seconds * 20L);
+    }
+
     private void startCountdown(Match match) {
+        if (match.waitingTask != null) match.waitingTask.cancel();
         match.phase = Phase.COUNTDOWN;
         match.countdownTask = new BukkitRunnable() {
             int remaining = match.room.countdown();
@@ -481,12 +521,13 @@ public final class DuelManager {
         if (match == null) return;
         Room room = match.room;
         event.setDeathMessage(null);
-        event.setKeepInventory(room.keepInventory());
-        if (room.keepInventory()) {
+        boolean keep = room.keepInventory() || room.kitEnabled();
+        event.setKeepInventory(keep);
+        if (keep) {
             event.getDrops().clear();
         }
-        event.setKeepLevel(room.keepExperience());
-        if (room.keepExperience()) {
+        event.setKeepLevel(room.keepExperience() || room.kitEnabled());
+        if (room.keepExperience() || room.kitEnabled()) {
             event.setDroppedExp(0);
         }
         finish(match, dead.getUniqueId(), true);
@@ -496,6 +537,7 @@ public final class DuelManager {
         String key = roomKey(match.room);
         if (matches.get(key) != match) return;
         matches.remove(key);
+        if (match.waitingTask != null) match.waitingTask.cancel();
         if (match.countdownTask != null) match.countdownTask.cancel();
         if (match.combatTask != null) match.combatTask.cancel();
         if (match.timerBar != null) {
@@ -538,7 +580,13 @@ public final class DuelManager {
                 continue;
             }
             Player online = Bukkit.getPlayer(id);
-            if (online != null) restorePlayer(online, snapshot, true);
+            if (online != null) {
+                restorePlayer(online, snapshot, true);
+                if (plugin.kits().pending(online)) {
+                    if (!plugin.kits().restore(online, false))
+                        plugin.msg(online, "kit-recovery-pending");
+                }
+            }
         }
         restoreWorldEdits(match);
         if (winner == null && played) {
@@ -563,7 +611,11 @@ public final class DuelManager {
         if (snapshot == null) return;
         event.setRespawnLocation(snapshot.location);
         Bukkit.getScheduler().runTask(plugin, () -> {
-            if (event.getPlayer().isOnline()) restorePlayer(event.getPlayer(), snapshot, false);
+            if (event.getPlayer().isOnline()) {
+                restorePlayer(event.getPlayer(), snapshot, false);
+                if (plugin.kits().pending(event.getPlayer()))
+                    plugin.kits().restore(event.getPlayer(), false);
+            }
         });
     }
 
