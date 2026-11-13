@@ -105,9 +105,10 @@ public final class RoomCommands implements CommandExecutor, TabCompleter {
                     org.bukkit.Location a = room.spawnA();
                     org.bukkit.Location b = room.spawnB();
                     if (a == null || b == null) validation = "Falta un spawn seguro (A o B).";
-                    else if (!room.a().contains(a) || room.gate().contains(a)
-                            || !room.b().contains(b) || room.gate().contains(b))
-                        validation = "Los spawns deben estar en sus zonas y fuera del cristal.";
+                    else if (!room.validSpawn(a) || !room.validSpawn(b))
+                        validation = "Los dos spawns deben estar dentro de la room y fuera del cristal.";
+                    else if (a.getWorld().equals(b.getWorld()) && a.distanceSquared(b) < 1)
+                        validation = "Los dos jugadores necesitan spawns diferentes.";
                 }
                 if (validation == null && room.kitEnabled() && !plugin.kits().hasKit(room))
                     validation = "El kit está activado, pero no existe un kit guardado.";
