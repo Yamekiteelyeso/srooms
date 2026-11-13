@@ -14,6 +14,7 @@ import org.bukkit.block.TileState;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
+import org.bukkit.entity.Projectile;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.player.PlayerRespawnEvent;
 import org.bukkit.potion.PotionEffect;
@@ -68,6 +69,7 @@ public final class DuelManager {
         BukkitTask combatTask;
         BossBar timerBar;
         final Map<String, BlockData> changedBlocks = new LinkedHashMap<>();
+        final Set<UUID> projectiles = new HashSet<>();
         Match(Room room, Player first) {
             this.room = room;
             this.first = first.getUniqueId();
@@ -119,6 +121,39 @@ public final class DuelManager {
             }
         }
         match.changedBlocks.clear();
+    }
+
+    public void recordProjectile(Player player, Projectile projectile) {
+        Match match = players.get(player.getUniqueId());
+        if (match != null) match.projectiles.add(projectile.getUniqueId());
+    }
+
+    private void clearProjectiles(Match match) {
+        World world = match.room.a().world();
+        if (world == null) return;
+        for (UUID projectileId : match.projectiles) {
+            org.bukkit.entity.Entity entity = Bukkit.getEntity(projectileId);
+            if (entity != null && entity.getWorld().equals(world)) entity.remove();
+        }
+        match.projectiles.clear();
+    }
+
+    public boolean forceReset(Room room) {
+        String key = roomKey(room);
+        Match match = matches.get(key);
+        if (match != null) {
+            match.phase = Phase.WAITING; // A forced reset must never reward a winner or broadcast a draw.
+            finish(match, null, false);
+            return true;
+        }
+        BukkitTask task = reopeningTasks.remove(key);
+        boolean reopening = reopeningAt.remove(key) != null;
+        if (task != null) task.cancel();
+        if (reopening) {
+            restoreGate(room);
+            return true;
+        }
+        return repairGate(room);
     }
 
     public boolean isPlaying(Player player) { return players.containsKey(player.getUniqueId()); }
@@ -428,6 +463,9 @@ public final class DuelManager {
     public Location exitLocation(Room room) {
         World world = room.a().world();
         if (world == null) return null;
+        Location configured = plugin.getConfig().getLocation("access.exit-spawn");
+        if (configured != null && configured.getWorld() != null && !room.contains(configured))
+            return configured;
         Location spawn = world.getSpawnLocation();
         if (!room.contains(spawn)) return spawn;
         int x = Math.max(room.a().maxX(), Math.max(room.b().maxX(), room.gate().maxX())) + 12;
@@ -589,6 +627,7 @@ public final class DuelManager {
             }
         }
         restoreWorldEdits(match);
+        clearProjectiles(match);
         if (winner == null && played) {
             if (plugin.getConfig().getBoolean("announcements.broadcast-results", true))
                 plugin.broadcast("duel-draw", "room", match.room.name(),
