@@ -90,3 +90,7 @@ rewards:
 # originales mientras un jugador usa un kit.
 kits:
   block-containers: true
+
+history:
+  # Últimas partidas (victorias y empates) que conserva history.yml.
+  max-entries: 200
