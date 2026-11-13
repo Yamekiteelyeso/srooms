@@ -16,6 +16,7 @@ import org.bukkit.event.entity.EntityExplodeEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.player.PlayerChangedWorldEvent;
+import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerDropItemEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
@@ -27,9 +28,23 @@ import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.projectiles.ProjectileSource;
 
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
+
 public final class GameListener implements Listener {
     private final SRoomsPlugin plugin;
+    private final Map<UUID, Long> intruderWarnings = new HashMap<>();
     public GameListener(SRoomsPlugin plugin) { this.plugin = plugin; }
+
+    private void warnIntruder(Player player, Room room) {
+        long now = System.currentTimeMillis();
+        long last = intruderWarnings.getOrDefault(player.getUniqueId(), 0L);
+        if (now - last >= 2500L) {
+            intruderWarnings.put(player.getUniqueId(), now);
+            plugin.msg(player, "intruder-ejected", "room", room.name());
+        }
+    }
 
     @EventHandler(priority = EventPriority.HIGH)
     public void onSelect(PlayerInteractEvent event) {
@@ -90,20 +105,59 @@ public final class GameListener implements Listener {
     @EventHandler
     public void onMove(PlayerMoveEvent event) {
         Player player = event.getPlayer();
-        Room room = plugin.duels().playerRoom(player);
-        if (room == null || event.getTo() == null) return;
+        if (event.getTo() == null || plugin.duels().isJoining(player)) return;
         if (event.getFrom().getBlockX() == event.getTo().getBlockX()
                 && event.getFrom().getBlockY() == event.getTo().getBlockY()
                 && event.getFrom().getBlockZ() == event.getTo().getBlockZ()
                 && event.getFrom().getWorld() == event.getTo().getWorld()) return;
-        if (!room.contains(event.getTo())) event.setTo(event.getFrom());
+        Room participating = plugin.duels().playerRoom(player);
+        if (participating != null) {
+            if (!participating.contains(event.getTo())) event.setTo(event.getFrom());
+            return;
+        }
+        Room entered = plugin.rooms().at(event.getTo());
+        if (entered != null && plugin.duels().isOccupied(entered)) {
+            if (entered.contains(event.getFrom())) {
+                Location exit = plugin.duels().exitLocation(entered);
+                if (exit != null) event.setTo(exit);
+                else event.setTo(event.getFrom());
+            } else event.setTo(event.getFrom());
+            warnIntruder(player, entered);
+        }
     }
 
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
     public void onTeleport(PlayerTeleportEvent event) {
-        Room room = plugin.duels().playerRoom(event.getPlayer());
-        if (room != null && (event.getTo() == null || !room.contains(event.getTo())))
+        Player player = event.getPlayer();
+        if (plugin.duels().isJoining(player)) return;
+        Room room = plugin.duels().playerRoom(player);
+        if (room != null && (event.getTo() == null || !room.contains(event.getTo()))) {
             event.setCancelled(true);
+            return;
+        }
+        if (room == null && event.getTo() != null) {
+            Room destination = plugin.rooms().at(event.getTo());
+            if (destination != null && plugin.duels().isOccupied(destination)) {
+                event.setCancelled(true);
+                warnIntruder(player, destination);
+            }
+        }
+    }
+
+    @EventHandler
+    public void onJoin(PlayerJoinEvent event) {
+        Player player = event.getPlayer();
+        Room occupied = plugin.rooms().at(player.getLocation());
+        if (occupied != null && plugin.duels().isOccupied(occupied)
+                && plugin.duels().playerRoom(player) != occupied) {
+            org.bukkit.Bukkit.getScheduler().runTask(plugin, () -> {
+                if (player.isOnline() && plugin.duels().playerRoom(player) != occupied) {
+                    Location exit = plugin.duels().exitLocation(occupied);
+                    if (exit != null) player.teleport(exit);
+                    warnIntruder(player, occupied);
+                }
+            });
+        }
     }
 
     @EventHandler
@@ -159,6 +213,7 @@ public final class GameListener implements Listener {
 
     @EventHandler
     public void onQuit(PlayerQuitEvent event) {
+        intruderWarnings.remove(event.getPlayer().getUniqueId());
         plugin.selections().cancel(event.getPlayer(), false);
         plugin.duels().leave(event.getPlayer(), true);
     }
