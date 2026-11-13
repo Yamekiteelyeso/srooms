@@ -115,7 +115,7 @@ public final class SelectionManager {
         if (draft == null || draft.stage == Stage.NAME) return;
         String requiredKind = draft.stage == Stage.GATE ? "gate" : "zone";
         if (!requiredKind.equals(toolKind(item))) {
-            plugin.msg(player, "selection-invalid", "reason", "Usa el hacha de esta etapa.");
+            plugin.msg(player, "selection-invalid", "reason", "Usa el hacha de selección correspondiente.");
             return;
         }
         if (action == Action.LEFT_CLICK_BLOCK) draft.point1 = block.getLocation();
@@ -191,6 +191,6 @@ public final class SelectionManager {
         plugin.rooms().add(room);
         drafts.remove(player.getUniqueId());
         plugin.msg(player, "room-created", "room", name);
-        player.sendMessage(SRoomsPlugin.color("&7Configura esta room con &b/roomconfig " + name));
+        player.sendMessage(SRoomsPlugin.color("&7Configura esta room con &b/srooms roomconfig " + name));
     }
 }
