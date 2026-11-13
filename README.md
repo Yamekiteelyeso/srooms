@@ -1,61 +1,68 @@
-# SRooms 1.1.0
+# SRooms 1.2.0
 
-Plugin de **rooms PvP 1v1** para **Paper 1.20.1** y Java 17. Sin dependencias externas.
+**Paper 1.20.1 · Java 17 · Maven · Sin dependencias obligatorias**
+
+Plugin de salas 1v1 para BoxPvP, Practice y PvP. Máximo **2 participantes por arena**.
 
 ## Instalación
 
-1. Compila con \`mvn clean package\` (o descarga el JAR generado en GitHub Actions).
-2. Copia \`target/SRooms-1.1.0.jar\` a \`plugins/\`.
-3. Reinicia Paper 1.20.1.
-4. Edita \`plugins/SRooms/config.yml\`, \`messages.yml\` o las rooms desde el menú si lo necesitas.
+Compila con **mvn clean package** o descarga el JAR desde el artifact de GitHub Actions. Colócalo en plugins/ de tu servidor Paper 1.20.1 y reinicia. Configura los archivos en plugins/SRooms/.
 
-## Comandos (único comando base: /srooms)
+## Comandos
 
-| Comando | Permiso | Uso |
-|---|---|---|
-| \`/srooms help\` | srooms.use | Ayuda |
-| \`/srooms list\` | srooms.use | Lista ocupación (0/2, 1/2, 2/2) y estado |
-| \`/srooms join <room>\` | srooms.use | Entrar a una arena |
-| \`/srooms leave\` | srooms.use | Salir / abandonar combate |
-| \`/srooms info <room>\` | srooms.use | Ver room, keep, tiempo de reapertura |
-| \`/srooms createroom\` | srooms.admin | Iniciar selección de regiones |
-| \`/srooms nameroom <nombre>\` | srooms.admin | Guardar la selección completa |
-| \`/srooms roomconfig <nombre>\` | srooms.admin | Menú gráfico de ajustes |
-| \`/srooms deleteroom <nombre>\` | srooms.admin | Eliminar la room vacía |
-| \`/srooms reopen <nombre> <0-300>\` | srooms.admin | Ajustar segundos de reapertura |
-| \`/srooms cancel\` | srooms.admin | Cancelar creación |
+| Comando | Función | Permiso |
+| --- | --- | --- |
+| /srooms gui | Menú público de salas con estados | srooms.use |
+| /srooms list | Lista de rooms y ocupación | srooms.use |
+| /srooms join <room> | Entrar a combatir | srooms.use |
+| /srooms leave | Abandonar combate | srooms.use |
+| /srooms info <room> | Datos de la room | srooms.use |
+| /srooms stats [jugador] | Victorias, derrotas y rachas | srooms.use |
+| /srooms top | Top 10 por victorias | srooms.use |
+| /srooms createroom | Selección con hachas | srooms.admin |
+| /srooms nameroom <nombre> | Guardar creación | srooms.admin |
+| /srooms roomconfig <room> | Menú de ajustes | srooms.admin |
+| /srooms deleteroom <room> | Borrar room libre | srooms.admin |
+| /srooms reopen <room> <0-300> | Segundos de reapertura | srooms.admin |
+| /srooms duration <room> <30-1800> | Duración máxima del combate | srooms.admin |
+| /srooms reload | Recargar ajustes y mensajes | srooms.admin |
+| /srooms cancel | Cancelar selección | srooms.admin |
 
-Los comandos antiguos (\`/createroom\`, \`/roomconfig\`, \`/room join\`...) fueron sustituidos por los subcomandos de \`/srooms\`.
+## Crear una room
 
-## Creación de rooms
+1. /srooms createroom — hacha: dos esquinas de zona A, luego de zona B.
+2. Segunda hacha: dos puntos de la barrera de cristal.
+3. /srooms nameroom Box1
+4. /srooms roomconfig Box1 — define spawn A/B desde cada zona si no hay suelo seguro en el centro.
 
-1. Ejecuta \`/srooms createroom\`.
-2. Con el hacha inicial, **clic izquierdo = primer punto**, **clic derecho = segundo punto** de la **zona A**.
-3. Repite para la **zona B**.
-4. Con la segunda hacha, selecciona las dos esquinas del **cristal de cierre**.
-5. Las hachas se retiran al terminar: escribe \`/srooms nameroom <nombre>\`.
-6. En \`/srooms roomconfig <nombre>\` configura inventario, experiencia, efectos, hambre, construcción, preparación, **reapertura**, spawn A y spawn B.
+## Mejoras 1.2
 
-Si no hay suelo seguro en el centro de una zona, marca manualmente su spawn desde el menú mientras estés dentro de ella. No coloques spawns en la barrera.
+- **Walk-in opcional:** al entrar andando desde fuera de la región de una room, el plugin une al jugador al primer lado disponible (desactivado por defecto).
+- **Menú /srooms gui:** explorador paginado de salas y entrada con un clic.
+- **Tiempo de pelea:** de 30 a 1800 segundos con BossBar; empate si el contador se agota.
+- **Estadísticas persistentes:** victorias, derrotas, rachas y leaderboard en stats.yml.
+- **Configuración por room:** keep inventory y XP, efectos de pociones, hambre, curación, bloqueo de comandos, bloqueo de perlas/chorus, congelación en cuenta atrás, activar/desactivar room, tiempo de pelea y reapertura.
+- **Cristal por sala:** siete materiales/colores en la GUI.
+- **Sonidos y anuncios** configurables desde config.yml y messages.yml.
+- **Recompensas opcionales al ganador:** habilita rewards.enabled y la opción de recompensa en la room. Comandos configurables con %winner%, %loser% y %room%; solo en victorias de combates iniciados, no empates.
+- **Protección del mapa:** permite restaurar bloques modificados durante duelos cuando allow-build está activo, limita la cantidad de modificaciones y evita drops duplicados. Los bloques colocados por participantes NO se reembolsan.
+- **Estado de los jugadores:** restaura localización, modo de juego, vuelo, salud, hambre y efectos, respetando los ajustes de keep.
+- **Seguridad:** tercero rechazado, sin acceso externo durante combate, cierre del cristal en countdown y hasta que se cumpla el tiempo de reapertura.
 
-## Combates y seguridad
+## Archivos
 
-- Cada room tiene **máximo dos participantes**. El primero ocupa A; el segundo, B.
-- No se admite un tercero aunque se intente usar \`/srooms join\`, caminar o teletransportarse dentro de una arena ocupada. Se rechaza a quien entra último, **sin expulsarlo del servidor** ni sacar a los participantes.
-- La barrera se cierra antes del combate; se abre cuando termina la cuenta regresiva.
-- El ganador se determina por muerte o abandono, con mensaje de resultado global, título de victoria y derrota, y nombres de ambos jugadores.
-- **Después del resultado**, se vuelve a cerrar la barrera; la room espera el tiempo configurado antes de restaurarla y admitir a otros dos jugadores. Predeterminado: **10 segundos**, configurable de **0 a 300** por arena.
-- Las rooms que están ocupadas o en reapertura no pueden modificarse ni eliminarse.
-- El inventario y los efectos previos de los jugadores se conservan/restauran de acuerdo con las opciones de la room; ten en cuenta que \`keep-inventory: false\` permite pérdida de objetos al morir.
-- Las rooms se guardan en \`rooms.yml\`; las barreras en \`gate-recovery.yml\` para restauración tras un apagado inesperado.
-- Mensajes completamente configurables en \`messages.yml\`. Los textos de la versión anterior se migran **solo si no fueron personalizados**.
+- config.yml — ajustes globales, defaults para arenas nuevas, sonidos, permisos de comandos, recompensas y protección.
+- messages.yml — mensajes editables y títulos.
+- rooms.yml — configuración independiente y persistente por arena.
+- stats.yml — victorias/derrotas por UUID.
+- gate-recovery.yml — respaldo de bloques del cristal ante reinicios inesperados.
 
-## Pruebas recomendadas
+Las arenas previas se cargan sin borrarse. Los archivos globales se amplían con valores predeterminados de nuevas versiones.
 
-- Crea una room con dos spawns y un cristal; comprueba selección, guardado y reinicio.
-- Entrar con 2 jugadores y probar un tercero por comando, caminando y por teleport; el tercero nunca debe entrar.
-- Verifica ganador por muerte, abandono y desconexión; lee el anuncio para todo el servidor.
-- Ajusta la reapertura a 0, 5 y 30 segundos, tanto desde el menú como con \`/srooms reopen\`.
-- Verifica que durante la reapertura no admite jugadores y que restaura los bloques originales después de la espera.
+## Pruebas
 
-**Compilación:** \`mvn clean package\` → \`target/SRooms-1.1.0.jar\`. El proyecto tiene GitHub Actions para compilar y generar el archivo ZIP descargable con el JAR.
+Comprueba creación, selección, reapertura, duelos con dos y tres jugadores, entrada automática, empate por timeout, BossBar, stats, protección de construcción, restitución de jugador, premios opt-in y persistencia después del reinicio.
+
+**Build:** mvn clean package => target/SRooms-1.2.0.jar.
+
+**Nota:** la compilación por CI valida que el proyecto genere el JAR; antes de producción comprueba los flujos en un servidor de prueba Paper 1.20.1.
