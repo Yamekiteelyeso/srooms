@@ -109,6 +109,8 @@ public final class RoomCommands implements CommandExecutor, TabCompleter {
                             || !room.b().contains(b) || room.gate().contains(b))
                         validation = "Los spawns deben estar en sus zonas y fuera del cristal.";
                 }
+                if (validation == null && room.kitEnabled() && !plugin.kits().hasKit(room))
+                    validation = "El kit está activado, pero no existe un kit guardado.";
                 if (validation == null) plugin.msg(sender, "room-check-ok", "room", room.name());
                 else plugin.msg(sender, "room-check-error", "room", room.name(),
                         "reason", validation);
