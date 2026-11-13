@@ -26,7 +26,7 @@ public final class SRoomsPlugin extends JavaPlugin {
         duels = new DuelManager(this);
         menu = new ConfigMenu(this);
         RoomCommands commands = new RoomCommands(this);
-        for (String name : new String[]{"createroom", "nameroom", "roomconfig", "deleteroom", "room"}) {
+        for (String name : new String[]{"srooms"}) {
             Objects.requireNonNull(getCommand(name), name + " missing in plugin.yml").setExecutor(commands);
             Objects.requireNonNull(getCommand(name)).setTabCompleter(commands);
         }
@@ -52,6 +52,17 @@ public final class SRoomsPlugin extends JavaPlugin {
         for (int i = 0; i + 1 < replacements.length; i += 2)
             value = value.replace("%" + replacements[i] + "%", replacements[i + 1]);
         target.sendMessage(color(messages.getString("prefix", "&8[&bSRooms&8] &7") + value));
+    }
+
+    public String raw(String key, String... replacements) {
+        String value = messages.getString(key, key);
+        for (int i = 0; i + 1 < replacements.length; i += 2)
+            value = value.replace("%" + replacements[i] + "%", replacements[i + 1]);
+        return color(value);
+    }
+
+    public void broadcast(String key, String... replacements) {
+        getServer().broadcastMessage(color(messages.getString("prefix", "&8[&bSRooms&8] &7")) + raw(key, replacements));
     }
 
     public static String color(String value) {
