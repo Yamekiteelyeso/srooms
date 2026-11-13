@@ -150,6 +150,8 @@ public final class RoomCommands implements CommandExecutor, TabCompleter {
                 plugin.msg(sender, "stats-title", "player", stats.name());
                 plugin.msg(sender, "stats-line", "wins", String.valueOf(stats.wins()),
                         "losses", String.valueOf(stats.losses()),
+                        "draws", String.valueOf(stats.draws()),
+                        "elo", String.valueOf(stats.rating()),
                         "streak", String.valueOf(stats.streak()),
                         "best", String.valueOf(stats.bestStreak()),
                         "rate", String.format(Locale.ROOT, "%.1f", stats.winRate()));
@@ -159,15 +161,35 @@ public final class RoomCommands implements CommandExecutor, TabCompleter {
                 plugin.browser().open(player, 0);
             }
             case "top" -> {
-                plugin.msg(sender, "top-title");
+                boolean elo = args.length >= 2 && args[1].equalsIgnoreCase("elo");
+                plugin.msg(sender, elo ? "top-elo-title" : "top-title");
                 int rank = 0;
-                for (StatsManager.Record record : plugin.stats().top(10)) {
-                    if (record.wins() == 0) continue;
-                    plugin.msg(sender, "top-entry", "rank", String.valueOf(++rank),
-                            "player", record.name(), "wins", String.valueOf(record.wins()),
+                List<StatsManager.Record> top = elo
+                        ? plugin.stats().topRating(10) : plugin.stats().top(10);
+                for (StatsManager.Record record : top) {
+                    if (record.fights() == 0) continue;
+                    plugin.msg(sender, elo ? "top-elo-entry" : "top-entry",
+                            "rank", String.valueOf(++rank),
+                            "player", record.name(), "elo", String.valueOf(record.rating()),
+                            "wins", String.valueOf(record.wins()),
                             "streak", String.valueOf(record.streak()));
                 }
                 if (rank == 0) plugin.msg(sender, "stats-empty");
+            }
+            case "history" -> {
+                if (args.length > 2) { plugin.msg(sender, "usage-history"); return true; }
+                List<MatchHistory.Entry> history = plugin.history()
+                        .recent(args.length == 2 ? args[1] : null, 10);
+                if (history.isEmpty()) { plugin.msg(sender, "history-empty"); return true; }
+                plugin.msg(sender, "history-title");
+                for (MatchHistory.Entry result : history) {
+                    String time = java.time.format.DateTimeFormatter.ofPattern("MM-dd HH:mm")
+                            .format(java.time.Instant.ofEpochMilli(result.when())
+                                    .atZone(java.time.ZoneId.systemDefault()));
+                    plugin.msg(sender, result.draw() ? "history-draw" : "history-win",
+                            "room", result.room(), "a", result.first(),
+                            "b", result.second(), "winner", result.winner(), "time", time);
+                }
             }
             case "createroom" -> {
                 if (!(sender instanceof Player player)) {
@@ -280,7 +302,9 @@ public final class RoomCommands implements CommandExecutor, TabCompleter {
                         "status", plugin.duels().state(room),
                         "keep", room.keepInventory() ? "Sí" : "No",
                         "seconds", String.valueOf(room.reopenDelay()),
-                        "duration", String.valueOf(room.duelDuration()));
+                        "duration", String.valueOf(room.duelDuration()),
+                        "ranked", room.ranked() ? "Sí" : "No",
+                        "kit", room.kitEnabled() ? "Sí" : "No");
             }
             default -> plugin.msg(sender, "unknown-command");
         }
@@ -303,7 +327,7 @@ public final class RoomCommands implements CommandExecutor, TabCompleter {
         List<String> possible = new ArrayList<>();
         if (args.length == 1) {
             if (sender.hasPermission("srooms.use"))
-                possible.addAll(Arrays.asList("help", "list", "join", "leave", "info", "stats", "top", "gui"));
+                possible.addAll(Arrays.asList("help", "list", "join", "leave", "info", "stats", "top", "history", "gui"));
             if (sender.hasPermission("srooms.admin"))
                 possible.addAll(Arrays.asList("createroom", "nameroom", "roomconfig", "deleteroom", "reopen", "duration", "reload", "check", "repair", "reset", "setexit", "kit", "cancel"));
         } else if (args.length == 2) {
@@ -314,6 +338,10 @@ public final class RoomCommands implements CommandExecutor, TabCompleter {
             }
             if (sub.equals("stats")) {
                 for (Player online : plugin.getServer().getOnlinePlayers()) possible.add(online.getName());
+            }
+            if (sub.equals("top")) possible.addAll(Arrays.asList("elo", "wins"));
+            if (sub.equals("history")) {
+                for (Room room : plugin.rooms().all()) possible.add(room.name());
             }
             if (sub.equals("kit") && sender.hasPermission("srooms.admin")) {
                 possible.addAll(Arrays.asList("save", "clear", "info"));
