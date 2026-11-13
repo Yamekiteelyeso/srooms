@@ -79,10 +79,21 @@ public final class ConfigMenu implements Listener {
                     "&7Nivel: &f" + (level == 0 ? "DESACTIVADO" : level),
                     "&eClic: 0 > I > II > III > 0"));
         }
+        menu.setItem(32, item(Material.RED_STAINED_GLASS_PANE, "&cReducir reapertura",
+                "&7Actual: &f" + room.reopenDelay() + " segundos",
+                "&eClic: -1 segundo", "&eShift + clic: -5 segundos"));
+        menu.setItem(33, item(Material.CLOCK, "&b&lTiempo de reapertura",
+                "&7Espera despues de anunciar al ganador.",
+                "&7Durante la espera la room esta cerrada.",
+                "&7Tiempo: &f" + room.reopenDelay() + " segundos",
+                "&8Maximo: 300 segundos"));
+        menu.setItem(34, item(Material.LIME_STAINED_GLASS_PANE, "&aAumentar reapertura",
+                "&7Actual: &f" + room.reopenDelay() + " segundos",
+                "&eClic: +1 segundo", "&eShift + clic: +5 segundos"));
         menu.setItem(38, item(Material.REDSTONE, "&c-1 segundo", "&7Countdown actual: &f" + room.countdown() + " s"));
         menu.setItem(40, item(Material.EMERALD, "&a+1 segundo", "&7Countdown actual: &f" + room.countdown() + " s"));
-        menu.setItem(42, item(Material.LIME_BED, "&aSpawn A", "&7Ubicate dentro de la zona A", "&eClic para fijar tu posicion"));
-        menu.setItem(43, item(Material.RED_BED, "&cSpawn B", "&7Ubicate dentro de la zona B", "&eClic para fijar tu posicion"));
+        menu.setItem(42, item(Material.LIME_BED, "&aSpawn A", "&7Ubícate dentro de la zona A", "&eClic para fijar tu posicion"));
+        menu.setItem(43, item(Material.RED_BED, "&cSpawn B", "&7Ubícate dentro de la zona B", "&eClic para fijar tu posicion"));
         menu.setItem(49, item(Material.BARRIER, "&cCerrar menú"));
         player.openInventory(menu);
     }
@@ -109,6 +120,8 @@ public final class ConfigMenu implements Listener {
             case 13 -> room.lockHunger(!room.lockHunger());
             case 14 -> room.healOnJoin(!room.healOnJoin());
             case 15 -> room.clearEffects(!room.clearEffects());
+            case 32 -> room.reopenDelay(room.reopenDelay() - (event.isShiftClick() ? 5 : 1));
+            case 34 -> room.reopenDelay(room.reopenDelay() + (event.isShiftClick() ? 5 : 1));
             case 38 -> room.countdown(room.countdown() - 1);
             case 40 -> room.countdown(room.countdown() + 1);
             case 42 -> {
