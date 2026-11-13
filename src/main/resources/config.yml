@@ -4,6 +4,12 @@
 # en rooms.yml y pueden modificarse desde /srooms roomconfig <room>.
 # ================================================================
 
+protection:
+  # Cuando allow-build es true, se restauran los cambios al finalizar.
+  # El plugin NO duplica los drops al romper; los bloques colocados
+  # no se reembolsan a sus propietarios.
+  max-edited-blocks: 4096
+
 selection:
   # Protege contra selecciones enormes que puedan generar lag.
   max-zone-volume: 250000
@@ -49,3 +55,14 @@ sounds:
   start: ENTITY_ENDER_DRAGON_GROWL
   win: UI_TOAST_CHALLENGE_COMPLETE
   lose: ENTITY_VILLAGER_NO
+
+
+# Recompensas por ganar (solo cuando la pelea realmente comenzó).
+# También debes activar "Recompensa al ganador" en /srooms roomconfig.
+# No se ejecutan por empates o partidas canceladas.
+# Se ejecutan en consola, así que edita esto solo con permisos de admin.
+# Placeholders: %winner%, %loser%, %room%. Máximo 20 comandos.
+rewards:
+  enabled: false
+  winner-commands:
+    - "give %winner% diamond 1"
