@@ -15,12 +15,14 @@ import org.bukkit.event.block.BlockFromToEvent;
 import org.bukkit.event.block.BlockBurnEvent;
 import org.bukkit.event.block.BlockFadeEvent;
 import org.bukkit.event.block.BlockSpreadEvent;
+import org.bukkit.event.block.BlockIgniteEvent;
 import org.bukkit.event.block.BlockPistonExtendEvent;
 import org.bukkit.event.block.BlockPistonRetractEvent;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.EntityPickupItemEvent;
 import org.bukkit.event.entity.ProjectileLaunchEvent;
+import org.bukkit.event.entity.EntityChangeBlockEvent;
 import org.bukkit.event.entity.EntityExplodeEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.inventory.InventoryClickEvent;
@@ -190,18 +192,32 @@ public final class GameListener implements Listener {
 
     @EventHandler(ignoreCancelled = true)
     public void onPistonExtend(BlockPistonExtendEvent event) {
-        if (event.getBlocks().stream().anyMatch(block ->
-                plugin.rooms().at(block.getLocation()) != null
-                        || plugin.rooms().at(block.getRelative(event.getDirection()).getLocation()) != null))
+        if (plugin.rooms().at(event.getBlock().getLocation()) != null
+                || plugin.rooms().at(event.getBlock().getRelative(event.getDirection()).getLocation()) != null
+                || event.getBlocks().stream().anyMatch(block ->
+                    plugin.rooms().at(block.getLocation()) != null
+                            || plugin.rooms().at(block.getRelative(event.getDirection()).getLocation()) != null))
             event.setCancelled(true);
     }
 
     @EventHandler(ignoreCancelled = true)
     public void onPistonRetract(BlockPistonRetractEvent event) {
-        if (event.getBlocks().stream().anyMatch(block ->
-                plugin.rooms().at(block.getLocation()) != null
-                        || plugin.rooms().at(block.getRelative(event.getDirection()).getLocation()) != null))
+        if (plugin.rooms().at(event.getBlock().getLocation()) != null
+                || plugin.rooms().at(event.getBlock().getRelative(event.getDirection()).getLocation()) != null
+                || event.getBlocks().stream().anyMatch(block ->
+                    plugin.rooms().at(block.getLocation()) != null
+                            || plugin.rooms().at(block.getRelative(event.getDirection().getOppositeFace()).getLocation()) != null))
             event.setCancelled(true);
+    }
+
+    @EventHandler(ignoreCancelled = true)
+    public void onIgnite(BlockIgniteEvent event) {
+        if (plugin.rooms().at(event.getBlock().getLocation()) != null) event.setCancelled(true);
+    }
+
+    @EventHandler(ignoreCancelled = true)
+    public void onEntityChangeBlock(EntityChangeBlockEvent event) {
+        if (plugin.rooms().at(event.getBlock().getLocation()) != null) event.setCancelled(true);
     }
 
     @EventHandler(ignoreCancelled = true)
