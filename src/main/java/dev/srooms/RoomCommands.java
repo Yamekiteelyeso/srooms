@@ -71,6 +71,10 @@ public final class RoomCommands implements CommandExecutor, TabCompleter {
                         "best", String.valueOf(stats.bestStreak()),
                         "rate", String.format(Locale.ROOT, "%.1f", stats.winRate()));
             }
+            case "gui" -> {
+                if (!(sender instanceof Player player)) { plugin.msg(sender, "only-player"); return true; }
+                plugin.browser().open(player, 0);
+            }
             case "top" -> {
                 plugin.msg(sender, "top-title");
                 int rank = 0;
@@ -212,7 +216,7 @@ public final class RoomCommands implements CommandExecutor, TabCompleter {
         List<String> possible = new ArrayList<>();
         if (args.length == 1) {
             if (sender.hasPermission("srooms.use"))
-                possible.addAll(Arrays.asList("help", "list", "join", "leave", "info", "stats", "top"));
+                possible.addAll(Arrays.asList("help", "list", "join", "leave", "info", "stats", "top", "gui"));
             if (sender.hasPermission("srooms.admin"))
                 possible.addAll(Arrays.asList("createroom", "nameroom", "roomconfig", "deleteroom", "reopen", "duration", "reload", "cancel"));
         } else if (args.length == 2) {
