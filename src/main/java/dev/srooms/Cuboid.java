@@ -71,6 +71,13 @@ public final class Cuboid {
                 && location.getBlockZ() >= minZ && location.getBlockZ() <= maxZ;
     }
 
+    public boolean contains(Cuboid other) {
+        return worldName.equals(other.worldName)
+                && minX <= other.minX && maxX >= other.maxX
+                && minY <= other.minY && maxY >= other.maxY
+                && minZ <= other.minZ && maxZ >= other.maxZ;
+    }
+
     public boolean overlaps(Cuboid other) {
         return worldName.equals(other.worldName)
                 && minX <= other.maxX && maxX >= other.minX
