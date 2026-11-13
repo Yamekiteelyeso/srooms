@@ -32,7 +32,7 @@ public final class RoomCommands implements CommandExecutor, TabCompleter {
         String sub = args[0].toLowerCase(Locale.ROOT);
         boolean admin = switch (sub) {
             case "createroom", "nameroom", "roomconfig", "config",
-                    "deleteroom", "reopen", "cancel", "reload", "duration", "check", "repair" -> true;
+                    "deleteroom", "reopen", "cancel", "reload", "duration", "check", "repair", "kit", "setexit", "reset" -> true;
             default -> false;
         };
         if (!sender.hasPermission(admin ? "srooms.admin" : "srooms.use")) {
@@ -41,6 +41,62 @@ public final class RoomCommands implements CommandExecutor, TabCompleter {
         }
 
         switch (sub) {
+            case "kit" -> {
+                if (args.length != 3 || !(args[1].equalsIgnoreCase("save")
+                        || args[1].equalsIgnoreCase("clear") || args[1].equalsIgnoreCase("info"))) {
+                    plugin.msg(sender, "usage-kit");
+                    return true;
+                }
+                Room room = plugin.rooms().get(args[2]);
+                if (room == null) { plugin.msg(sender, "unknown-room"); return true; }
+                if (args[1].equalsIgnoreCase("info")) {
+                    plugin.msg(sender, "kit-info", "room", room.name(),
+                            "saved", plugin.kits().hasKit(room) ? "Sí" : "No",
+                            "enabled", room.kitEnabled() ? "Sí" : "No");
+                    return true;
+                }
+                if (plugin.duels().isOccupied(room)) {
+                    plugin.msg(sender, "room-occupied");
+                    return true;
+                }
+                if (args[1].equalsIgnoreCase("save")) {
+                    if (!(sender instanceof Player player)) {
+                        plugin.msg(sender, "only-player");
+                        return true;
+                    }
+                    if (plugin.duels().isPlaying(player)) {
+                        plugin.msg(sender, "already-in-room");
+                        return true;
+                    }
+                    if (plugin.kits().saveKit(room, player))
+                        plugin.msg(sender, "kit-saved", "room", room.name());
+                    else plugin.msg(sender, "kit-save-failed");
+                } else {
+                    if (plugin.kits().clearKit(room))
+                        plugin.msg(sender, "kit-cleared", "room", room.name());
+                    else plugin.msg(sender, "kit-save-failed");
+                }
+            }
+            case "setexit" -> {
+                if (!(sender instanceof Player player)) {
+                    plugin.msg(sender, "only-player"); return true;
+                }
+                for (Room room : plugin.rooms().all()) {
+                    if (room.contains(player.getLocation())) {
+                        plugin.msg(sender, "exit-inside-room"); return true;
+                    }
+                }
+                plugin.getConfig().set("access.exit-spawn", player.getLocation().clone());
+                plugin.saveConfig();
+                plugin.msg(sender, "exit-saved");
+            }
+            case "reset" -> {
+                Room room = findRoom(sender, args, "usage-reset");
+                if (room == null) return true;
+                if (plugin.duels().forceReset(room))
+                    plugin.msg(sender, "room-reset", "room", room.name());
+                else plugin.msg(sender, "room-already-idle", "room", room.name());
+            }
             case "check" -> {
                 Room room = findRoom(sender, args, "usage-check");
                 if (room == null) return true;
@@ -153,6 +209,10 @@ public final class RoomCommands implements CommandExecutor, TabCompleter {
                     plugin.msg(sender, "room-occupied");
                     return true;
                 }
+                if (plugin.kits().hasKit(room) && !plugin.kits().clearKit(room)) {
+                    plugin.msg(sender, "kit-save-failed");
+                    return true;
+                }
                 plugin.rooms().remove(room);
                 plugin.msg(sender, "room-deleted", "room", room.name());
             }
@@ -245,16 +305,22 @@ public final class RoomCommands implements CommandExecutor, TabCompleter {
             if (sender.hasPermission("srooms.use"))
                 possible.addAll(Arrays.asList("help", "list", "join", "leave", "info", "stats", "top", "gui"));
             if (sender.hasPermission("srooms.admin"))
-                possible.addAll(Arrays.asList("createroom", "nameroom", "roomconfig", "deleteroom", "reopen", "duration", "reload", "check", "repair", "cancel"));
+                possible.addAll(Arrays.asList("createroom", "nameroom", "roomconfig", "deleteroom", "reopen", "duration", "reload", "check", "repair", "reset", "setexit", "kit", "cancel"));
         } else if (args.length == 2) {
             String sub = args[0].toLowerCase(Locale.ROOT);
-            if (Arrays.asList("join", "info", "roomconfig", "config", "deleteroom", "reopen", "duration", "check", "repair").contains(sub)) {
+            if (Arrays.asList("join", "info", "roomconfig", "config", "deleteroom", "reopen", "duration", "check", "repair", "reset").contains(sub)) {
                 if (sender.hasPermission(sub.equals("join") || sub.equals("info") ? "srooms.use" : "srooms.admin"))
                     for (Room room : plugin.rooms().all()) possible.add(room.name());
             }
             if (sub.equals("stats")) {
                 for (Player online : plugin.getServer().getOnlinePlayers()) possible.add(online.getName());
             }
+            if (sub.equals("kit") && sender.hasPermission("srooms.admin")) {
+                possible.addAll(Arrays.asList("save", "clear", "info"));
+            }
+        } else if (args.length == 3 && args[0].equalsIgnoreCase("kit")
+                && sender.hasPermission("srooms.admin")) {
+            for (Room room : plugin.rooms().all()) possible.add(room.name());
         } else if (args.length == 3 && args[0].equalsIgnoreCase("reopen") && sender.hasPermission("srooms.admin")) {
             possible.addAll(Arrays.asList("0", "5", "10", "15", "30", "60"));
         } else if (args.length == 3 && args[0].equalsIgnoreCase("duration") && sender.hasPermission("srooms.admin")) {
