@@ -31,14 +31,19 @@ public final class MatchHistory {
         for (Map<?, ?> row : yaml.getMapList("matches")) {
             Object timestamp = row.get("when");
             if (!(timestamp instanceof Number number)) continue;
-            String room = String.valueOf(row.getOrDefault("room", ""));
-            String first = String.valueOf(row.getOrDefault("first", ""));
-            String second = String.valueOf(row.getOrDefault("second", ""));
-            String winner = String.valueOf(row.getOrDefault("winner", ""));
+            String room = value(row, "room");
+            String first = value(row, "first");
+            String second = value(row, "second");
+            String winner = value(row, "winner");
             if (room.isBlank() || first.isBlank() || second.isBlank()) continue;
             entries.add(new Entry(room, first, second, winner, number.longValue()));
         }
         trim();
+    }
+
+    private static String value(Map<?, ?> row, String key) {
+        Object object = row.get(key);
+        return object == null ? "" : String.valueOf(object);
     }
 
     private void trim() {
