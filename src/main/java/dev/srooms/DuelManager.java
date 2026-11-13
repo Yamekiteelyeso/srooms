@@ -460,7 +460,10 @@ public final class DuelManager {
             Player win = Bukkit.getPlayer(winner), lose = Bukkit.getPlayer(loser);
             String winnerName = winner.equals(match.first) ? match.firstName : match.secondName;
             String loserName = loser.equals(match.first) ? match.firstName : match.secondName;
-            if (played) plugin.stats().result(winner, winnerName, loser, loserName);
+            if (played) {
+                plugin.stats().result(winner, winnerName, loser, loserName);
+                rewardWinner(match.room, winnerName, loserName);
+            }
             if (plugin.getConfig().getBoolean("announcements.broadcast-results", true))
                 plugin.broadcast("duel-result", "room", match.room.name(),
                         "winner", winnerName, "loser", loserName);
@@ -508,6 +511,21 @@ public final class DuelManager {
         Bukkit.getScheduler().runTask(plugin, () -> {
             if (event.getPlayer().isOnline()) restorePlayer(event.getPlayer(), snapshot, false);
         });
+    }
+
+    private void rewardWinner(Room room, String winner, String loser) {
+        if (!room.rewardWinner() || !plugin.getConfig().getBoolean("rewards.enabled", false)) return;
+        int count = 0;
+        for (String template : plugin.getConfig().getStringList("rewards.winner-commands")) {
+            if (++count > 20) break;
+            String command = template.replace("%winner%", winner)
+                    .replace("%loser%", loser).replace("%room%", room.name()).trim();
+            if (command.startsWith("/")) command = command.substring(1);
+            if (!command.isEmpty()) {
+                try { Bukkit.dispatchCommand(Bukkit.getConsoleSender(), command); }
+                catch (Exception ex) { plugin.getLogger().warning("Recompensa fallida: " + ex.getMessage()); }
+            }
+        }
     }
 
     private void restorePlayer(Player player, Snapshot snapshot, boolean teleport) {
