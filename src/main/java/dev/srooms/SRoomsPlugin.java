@@ -21,10 +21,13 @@ public final class SRoomsPlugin extends JavaPlugin {
     private DuelManager duels;
     private ConfigMenu menu;
     private StatsManager stats;
+    private RoomsBrowser browser;
 
     @Override
     public void onEnable() {
         saveDefaultConfig();
+        getConfig().options().copyDefaults(true);
+        saveConfig();
         File messagesFile = new File(getDataFolder(), "messages.yml");
         if (!messagesFile.exists()) saveResource("messages.yml", false);
         messages = YamlConfiguration.loadConfiguration(messagesFile);
@@ -74,6 +77,7 @@ public final class SRoomsPlugin extends JavaPlugin {
         selections = new SelectionManager(this);
         duels = new DuelManager(this);
         menu = new ConfigMenu(this);
+        browser = new RoomsBrowser(this);
         RoomCommands commands = new RoomCommands(this);
         for (String name : new String[]{"srooms"}) {
             Objects.requireNonNull(getCommand(name), name + " missing in plugin.yml").setExecutor(commands);
@@ -81,6 +85,7 @@ public final class SRoomsPlugin extends JavaPlugin {
         }
         getServer().getPluginManager().registerEvents(new GameListener(this), this);
         getServer().getPluginManager().registerEvents(menu, this);
+        getServer().getPluginManager().registerEvents(browser, this);
         getLogger().info("SRooms iniciado con " + registry.all().size() + " rooms.");
     }
 
@@ -97,6 +102,7 @@ public final class SRoomsPlugin extends JavaPlugin {
     public DuelManager duels() { return duels; }
     public ConfigMenu menu() { return menu; }
     public StatsManager stats() { return stats; }
+    public RoomsBrowser browser() { return browser; }
 
     public void reloadSettings() {
         reloadConfig();
