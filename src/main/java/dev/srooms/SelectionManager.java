@@ -154,6 +154,11 @@ public final class SelectionManager {
                 plugin.msg(player, "selection-gate");
             }
             case GATE -> {
+                if (!draft.room.contains(cube)) {
+                    plugin.msg(player, "selection-invalid", "reason",
+                            "El cristal debe quedar completamente dentro de la room. Selecciona sus dos puntos otra vez.");
+                    return;
+                }
                 draft.gate = cube;
                 draft.stage = Stage.NAME;
                 removeTools(player);
@@ -186,6 +191,9 @@ public final class SelectionManager {
         plugin.rooms().add(room);
         drafts.remove(player.getUniqueId());
         plugin.msg(player, "room-created", "room", name);
+        if (!room.validSpawn(room.spawnA()) || !room.validSpawn(room.spawnB())) {
+            plugin.msg(player, "room-spawns-needed", "room", name);
+        }
         player.sendMessage(SRoomsPlugin.color("&7Configura esta room con &b/srooms roomconfig " + name));
     }
 }
