@@ -1,4 +1,4 @@
-# SRooms 1.3 | Personaliza todos los mensajes de chat.
+# SRooms 1.3.1 | Personaliza todos los mensajes de chat.
 # Colores Minecraft: &0 - &f, &l (negrita), &r (reiniciar).
 # Variables disponibles según mensaje: %room%, %winner%, %loser%, %seconds%, %players%, %status%, %keep%, %point%, %stage%, %coords%, %reason%.
 prefix: '&8[&b&lSRooms&8] &7'
@@ -33,12 +33,11 @@ usage-info: '&cUso: &f/srooms info <nombre>'
 room-created: '&aRoom &f%room% &acreada correctamente. &7Configúrala con &f/srooms roomconfig %room%&7.'
 room-deleted: '&aLa room &f%room% &ase eliminó correctamente.'
 reopen-configured: '&aReapertura de &f%room%&a: &f%seconds% segundos&a.'
-selection-a: '&fPaso &b1/3 &8• &7Selecciona las dos esquinas de la zona &fA &7con el hacha.'
-selection-b: '&fPaso &b2/3 &8• &7Zona A lista. Ahora marca la zona &fB&7.'
-selection-gate: '&fPaso &b3/3 &8• &7Marca el cierre de cristal con la &fhacha nueva&7.'
+selection-room: '&fPaso &b1/2 &8• &7Selecciona la &froom completa&7: &fclic izquierdo = punto 1&7, &fclic derecho = punto 2&7.'
+selection-gate: '&fPaso &b2/2 &8• &7Ahora selecciona la zona del &fcristal&7 con la segunda hacha. &fIzquierdo = punto 1&7, &fderecho = punto 2&7.'
 selection-name: '&a¡Selección terminada! &7Guarda la room usando &f/srooms nameroom <nombre>&7.'
 selection-point: '&7Punto &f%point% &7de &f%stage% &8→ &b%coords%'
-selection-incomplete: '&cTodavía no completas las 3 selecciones. &7Usa &f/srooms createroom&7.'
+selection-incomplete: '&cFalta terminar la región de la room o el cristal. &7Usa &f/srooms createroom&7.'
 selection-invalid: '&c%reason%'
 selection-ended: '&7La selección fue cancelada.'
 
@@ -117,3 +116,6 @@ history-empty: '&7Todavía no existen combates registrados.'
 usage-history: '&cUso: &f/srooms history [room]'
 history-win: '&8• &7%time% &8| &b%room% &8| &a%winner% &7ganó &8(&f%a% &7vs &f%b%&8)'
 history-draw: '&8• &7%time% &8| &b%room% &8| &eEmpate &8(&f%a% &7vs &f%b%&8)'
+
+# 1.3.1 - Una región para toda la room
+room-spawns-needed: '&eRoom &f%room% &eguardada. &7No se encontraron dos spawns seguros; configura Spawn jugador 1 y 2 desde &f/srooms roomconfig %room%&7.'
