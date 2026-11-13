@@ -55,8 +55,6 @@ public final class RoomRegistry {
         if (room.gate().volume() > plugin.getConfig().getLong("selection.max-gate-volume", 4096L))
             return "El cristal supera el volumen maximo.";
         if (room.a().world() == null) return "El mundo no esta cargado.";
-        if (room.a().findSafeSpawn() == null || room.b().findSafeSpawn() == null)
-            return "No se encontro suelo seguro en el centro de ambas zonas.";
         for (Room other : all()) {
             if (other.overlaps(room)) return "Se solapa con la room " + other.name() + ".";
         }
