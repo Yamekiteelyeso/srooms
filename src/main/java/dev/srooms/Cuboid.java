@@ -83,7 +83,7 @@ public final class Cuboid {
         if (w == null) return null;
         int x = minX + (maxX - minX) / 2;
         int z = minZ + (maxZ - minZ) / 2;
-        for (int y = maxY - 1; y >= minY + 1; y--) {
+        for (int y = Math.min(maxY - 1, w.getMaxHeight() - 2); y >= Math.max(minY, w.getMinHeight() + 1); y--) {
             Block ground = w.getBlockAt(x, y - 1, z);
             if (ground.getType().isSolid()
                     && w.getBlockAt(x, y, z).isPassable()
