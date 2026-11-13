@@ -1,4 +1,4 @@
-# SRooms 1.2.0
+# SRooms 1.2.1
 
 **Paper 1.20.1 · Java 17 · Maven · Sin dependencias obligatorias**
 
@@ -25,6 +25,8 @@ Compila con **mvn clean package** o descarga el JAR desde el artifact de GitHub 
 | /srooms deleteroom <room> | Borrar room libre | srooms.admin |
 | /srooms reopen <room> <0-300> | Segundos de reapertura | srooms.admin |
 | /srooms duration <room> <30-1800> | Duración máxima del combate | srooms.admin |
+| /srooms check <room> | Validar zonas, barrera y spawns | srooms.admin |
+| /srooms repair <room> | Restaurar la barrera desde la copia de recuperación (solo sala libre) | srooms.admin |
 | /srooms reload | Recargar ajustes y mensajes | srooms.admin |
 | /srooms cancel | Cancelar selección | srooms.admin |
 
@@ -34,6 +36,15 @@ Compila con **mvn clean package** o descarga el JAR desde el artifact de GitHub 
 2. Segunda hacha: dos puntos de la barrera de cristal.
 3. /srooms nameroom Box1
 4. /srooms roomconfig Box1 — define spawn A/B desde cada zona si no hay suelo seguro en el centro.
+
+## Correcciones 1.2.1
+
+- Un jugador que abandona en la cuenta regresiva cancela la pelea. Ya no se anuncia un ganador falso, ni se dan recompensas o estadísticas antes de comenzar.
+- La entrada a regiones vacías queda protegida: usuarios que no estén inscritos no pueden pasearse por una room (configurable con access.protect-empty-rooms). Los administradores pueden entrar a rooms libres.
+- El acceso caminando respeta el permiso srooms.use y la opción walk-in.
+- /srooms check <room> permite comprobar regiones y spawns antes de permitir combates; /srooms repair <room> recupera el respaldo del cristal cuando hay uno pendiente.
+- Los mensajes de reapertura respetan announcements.broadcast-ready también cuando finaliza el temporizador.
+- Pruebas unitarias JUnit 5 de las condiciones de victoria y empate: mvn clean verify ejecuta las pruebas y compila.
 
 ## Mejoras 1.2
 
@@ -63,6 +74,9 @@ Las arenas previas se cargan sin borrarse. Los archivos globales se amplían con
 
 Comprueba creación, selección, reapertura, duelos con dos y tres jugadores, entrada automática, empate por timeout, BossBar, stats, protección de construcción, restitución de jugador, premios opt-in y persistencia después del reinicio.
 
-**Build:** mvn clean package => target/SRooms-1.2.0.jar.
+**Build:** mvn clean package => target/SRooms-1.2.1.jar.
 
 **Nota:** la compilación por CI valida que el proyecto genere el JAR; antes de producción comprueba los flujos en un servidor de prueba Paper 1.20.1.
+
+
+**Al actualizar desde 1.2.0:** conserva una copia de tu carpeta plugins/SRooms/. La configuración y las arenas anteriores permanecen; el nuevo parámetro access.protect-empty-rooms se añade a config.yml de forma predeterminada.
