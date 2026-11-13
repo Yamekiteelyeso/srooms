@@ -21,7 +21,7 @@ gate-unsafe: '&cEl cristal seleccionado contiene bloques con datos. Cámbialo.'
 help-title: '&b&lSRooms &8» &fCentro de comandos &7(1v1)'
 help-player: '&7/srooms gui &8• &fmenú &8| &7/srooms list &8• &flistar &8| &7/srooms join <room> &8• &fentrar &8| &7/srooms leave &8• &fsalir &8| &7/srooms stats &8• &festadísticas &8| &7/srooms top &8• &ftop'
 help-admin: '&7/srooms createroom &8• &fcrear &8| &7/srooms nameroom <nombre> &8• &fguardar &8| &7/srooms roomconfig <room> &8• &fconfigurar'
-help-admin-two: '&7/srooms deleteroom <room> &8• &feliminar &8| &7/srooms reopen <room> <segundos> &8• &freapertura &8| &7/srooms duration <room> <segundos> &8• &ftiempo &8| &7/srooms reload &8• &frecargar'
+help-admin-two: '&7/srooms check <room> &8• &frevisar &8| &7/srooms repair <room> &8• &frecuperar cristal &8| &7/srooms deleteroom <room> &8• &feliminar &8| &7/srooms reopen <room> <segundos> &8• &freapertura &8| &7/srooms duration <room> <segundos> &8• &ftiempo &8| &7/srooms reload &8• &frecargar'
 usage-name: '&cUso: &f/srooms nameroom <nombre>'
 usage-config: '&cUso: &f/srooms roomconfig <nombre>'
 usage-delete: '&cUso: &f/srooms deleteroom <nombre>'
@@ -82,3 +82,11 @@ timer-title: '&b&l1v1 &8• &f%seconds% segundos restantes'
 
 # SRooms 1.2 - seguridad de construcción
 build-limit: '&cNo puedes modificar ese bloque. &7Límite de cambios alcanzado o bloque protegido.'
+
+# 1.2.1 - Diagnostico y recuperacion
+usage-check: '&cUso: &f/srooms check <nombre>'
+usage-repair: '&cUso: &f/srooms repair <nombre>'
+room-check-ok: '&aLa room &f%room% &apasó las comprobaciones: regiones, spawns y cristal.'
+room-check-error: '&cRoom &f%room%&c: &7%reason%'
+room-repaired: '&aSe restauraron los bloques originales de la barrera de &f%room%&a.'
+room-no-recovery: '&eNo hay ninguna barrera pendiente de recuperación en &f%room%&e.'
