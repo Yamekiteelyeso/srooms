@@ -4,23 +4,35 @@ import org.bukkit.Location;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.Projectile;
+import org.bukkit.block.Container;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
+import org.bukkit.event.block.BlockFromToEvent;
+import org.bukkit.event.block.BlockBurnEvent;
+import org.bukkit.event.block.BlockFadeEvent;
+import org.bukkit.event.block.BlockSpreadEvent;
+import org.bukkit.event.block.BlockPistonExtendEvent;
+import org.bukkit.event.block.BlockPistonRetractEvent;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
+import org.bukkit.event.entity.EntityPickupItemEvent;
+import org.bukkit.event.entity.ProjectileLaunchEvent;
 import org.bukkit.event.entity.EntityExplodeEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.inventory.InventoryClickEvent;
+import org.bukkit.event.inventory.InventoryOpenEvent;
+import org.bukkit.event.inventory.InventoryType;
 import org.bukkit.event.player.PlayerChangedWorldEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerCommandPreprocessEvent;
 import org.bukkit.event.player.PlayerTeleportEvent.TeleportCause;
 import org.bukkit.event.player.PlayerDropItemEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.event.player.PlayerBucketEmptyEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.player.PlayerRespawnEvent;
@@ -62,7 +74,36 @@ public final class GameListener implements Listener {
 
     @EventHandler(ignoreCancelled = true)
     public void onDrop(PlayerDropItemEvent event) {
-        if (plugin.selections().isTool(event.getItemDrop().getItemStack())) event.setCancelled(true);
+        Room room = plugin.duels().playerRoom(event.getPlayer());
+        if (plugin.selections().isTool(event.getItemDrop().getItemStack())
+                || room != null && room.kitEnabled()) event.setCancelled(true);
+    }
+
+    @EventHandler(ignoreCancelled = true)
+    public void onPickup(EntityPickupItemEvent event) {
+        if (event.getEntity() instanceof Player player) {
+            Room room = plugin.duels().playerRoom(player);
+            if (room != null && room.kitEnabled()) event.setCancelled(true);
+        }
+    }
+
+    @EventHandler(ignoreCancelled = true)
+    public void onOpen(InventoryOpenEvent event) {
+        if (!(event.getPlayer() instanceof Player player)) return;
+        Room room = plugin.duels().playerRoom(player);
+        if (room != null && room.kitEnabled()
+                && plugin.getConfig().getBoolean("kits.block-containers", true)
+                && event.getInventory().getType() != InventoryType.CRAFTING
+                && event.getInventory().getType() != InventoryType.PLAYER) {
+            event.setCancelled(true);
+            plugin.msg(player, "kit-containers-blocked");
+        }
+    }
+
+    @EventHandler(ignoreCancelled = true)
+    public void onProjectileLaunch(ProjectileLaunchEvent event) {
+        if (event.getEntity().getShooter() instanceof Player player)
+            plugin.duels().recordProjectile(player, event.getEntity());
     }
 
     @EventHandler(ignoreCancelled = true)
@@ -107,6 +148,12 @@ public final class GameListener implements Listener {
     }
 
     @EventHandler(ignoreCancelled = true)
+    public void onBucketEmpty(PlayerBucketEmptyEvent event) {
+        if (plugin.rooms().at(event.getBlockClicked().getRelative(event.getBlockFace()).getLocation()) != null)
+            event.setCancelled(true);
+    }
+
+    @EventHandler(ignoreCancelled = true)
     public void onPlace(BlockPlaceEvent event) {
         Player player = event.getPlayer();
         if (!canEdit(player, event.getBlockPlaced().getLocation())) {
@@ -119,6 +166,42 @@ public final class GameListener implements Listener {
             event.setCancelled(true);
             plugin.msg(player, "build-limit");
         }
+    }
+
+    @EventHandler(ignoreCancelled = true)
+    public void onLiquidFlow(BlockFromToEvent event) {
+        if (plugin.rooms().at(event.getToBlock().getLocation()) != null) event.setCancelled(true);
+    }
+
+    @EventHandler(ignoreCancelled = true)
+    public void onBurn(BlockBurnEvent event) {
+        if (plugin.rooms().at(event.getBlock().getLocation()) != null) event.setCancelled(true);
+    }
+
+    @EventHandler(ignoreCancelled = true)
+    public void onFade(BlockFadeEvent event) {
+        if (plugin.rooms().at(event.getBlock().getLocation()) != null) event.setCancelled(true);
+    }
+
+    @EventHandler(ignoreCancelled = true)
+    public void onSpread(BlockSpreadEvent event) {
+        if (plugin.rooms().at(event.getBlock().getLocation()) != null) event.setCancelled(true);
+    }
+
+    @EventHandler(ignoreCancelled = true)
+    public void onPistonExtend(BlockPistonExtendEvent event) {
+        if (event.getBlocks().stream().anyMatch(block ->
+                plugin.rooms().at(block.getLocation()) != null
+                        || plugin.rooms().at(block.getRelative(event.getDirection()).getLocation()) != null))
+            event.setCancelled(true);
+    }
+
+    @EventHandler(ignoreCancelled = true)
+    public void onPistonRetract(BlockPistonRetractEvent event) {
+        if (event.getBlocks().stream().anyMatch(block ->
+                plugin.rooms().at(block.getLocation()) != null
+                        || plugin.rooms().at(block.getRelative(event.getDirection()).getLocation()) != null))
+            event.setCancelled(true);
     }
 
     @EventHandler(ignoreCancelled = true)
@@ -237,6 +320,11 @@ public final class GameListener implements Listener {
     @EventHandler
     public void onJoin(PlayerJoinEvent event) {
         Player player = event.getPlayer();
+        if (plugin.kits().pending(player)) {
+            if (plugin.kits().restore(player, true))
+                plugin.msg(player, "kit-recovered");
+            else plugin.msg(player, "kit-recovery-pending");
+        }
         Room occupied = plugin.rooms().at(player.getLocation());
         if (shouldDenyEntry(player, occupied)) {
             org.bukkit.Bukkit.getScheduler().runTask(plugin, () -> {
