@@ -39,6 +39,7 @@ public final class Room {
     private boolean blockEnderPearls = true;
     private boolean freezeCountdown = true;
     private boolean enabled = true;
+    private boolean rewardWinner = false;
     private String barrierMaterial = "GLASS";
     private final Map<String, Integer> effectLevels = new LinkedHashMap<>();
 
@@ -95,6 +96,8 @@ public final class Room {
     public void freezeCountdown(boolean value) { freezeCountdown = value; }
     public boolean enabled() { return enabled; }
     public void enabled(boolean value) { enabled = value; }
+    public boolean rewardWinner() { return rewardWinner; }
+    public void rewardWinner(boolean value) { rewardWinner = value; }
     public String barrierMaterial() { return barrierMaterial; }
     public void barrierMaterial(String value) {
         org.bukkit.Material material = org.bukkit.Material.matchMaterial(value == null ? "" : value);
