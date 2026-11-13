@@ -1,5 +1,51 @@
+# ================================================================
+# SRooms 1.2.0 | Paper 1.20.1 | Java 17
+# Todas las arenas son 1v1. Los ajustes de cada arena se guardan
+# en rooms.yml y pueden modificarse desde /srooms roomconfig <room>.
+# ================================================================
+
 selection:
+  # Protege contra selecciones enormes que puedan generar lag.
   max-zone-volume: 250000
   max-gate-volume: 4096
+
+# Opciones predeterminadas para arenas NUEVAS (las existentes
+# conservan sus propios ajustes en rooms.yml).
+defaults:
+  walk-in: false                   # true = entrar caminando a la región
+  block-commands: true             # bloquear comandos durante la partida
+  block-ender-pearls: true         # evita escapes por perlas/chorus
+  freeze-countdown: true           # no permite moverse antes de PELEA
+  duel-duration-seconds: 300       # 30..1800 (5 minutos por defecto)
+
 duel:
-  gate-material: GLASS
+  gate-material: GLASS             # cristal por defecto; se puede cambiar por room
+  bossbar:
+    enabled: true                  # barra con cuenta regresiva del combate
+
+stats:
+  enabled: true                    # victorias, derrotas, rachas, top
+
+# Los administradores con srooms.admin siempre pueden usar comandos.
+# Los demás solo pueden usar /srooms leave y lo indicado aquí cuando
+# una room tiene la opción bloquear comandos activada.
+restrictions:
+  allowed-commands:
+    - "msg"
+    - "tell"
+    - "w"
+    - "r"
+
+announcements:
+  broadcast-results: true         # anunciar ganador o empate al servidor
+  broadcast-ready: true           # anunciar cuando se reabre una room
+
+sounds:
+  enabled: true
+  volume: 0.85
+  pitch: 1.0
+  join: BLOCK_NOTE_BLOCK_PLING
+  countdown: BLOCK_NOTE_BLOCK_HAT
+  start: ENTITY_ENDER_DRAGON_GROWL
+  win: UI_TOAST_CHALLENGE_COMPLETE
+  lose: ENTITY_VILLAGER_NO
