@@ -33,6 +33,13 @@ public final class Room {
     private boolean clearEffects = true;
     private int countdown = 5;
     private int reopenDelay = 10;
+    private int duelDuration = 300;
+    private boolean walkIn = false;
+    private boolean blockCommands = true;
+    private boolean blockEnderPearls = true;
+    private boolean freezeCountdown = true;
+    private boolean enabled = true;
+    private String barrierMaterial = "GLASS";
     private final Map<String, Integer> effectLevels = new LinkedHashMap<>();
 
     public Room(String name, Cuboid a, Cuboid b, Cuboid gate) {
@@ -76,6 +83,31 @@ public final class Room {
     public void countdown(int seconds) { countdown = Math.max(1, Math.min(30, seconds)); }
     public int reopenDelay() { return reopenDelay; }
     public void reopenDelay(int seconds) { reopenDelay = Math.max(0, Math.min(300, seconds)); }
+    public int duelDuration() { return duelDuration; }
+    public void duelDuration(int value) { duelDuration = Math.max(30, Math.min(1800, value)); }
+    public boolean walkIn() { return walkIn; }
+    public void walkIn(boolean value) { walkIn = value; }
+    public boolean blockCommands() { return blockCommands; }
+    public void blockCommands(boolean value) { blockCommands = value; }
+    public boolean blockEnderPearls() { return blockEnderPearls; }
+    public void blockEnderPearls(boolean value) { blockEnderPearls = value; }
+    public boolean freezeCountdown() { return freezeCountdown; }
+    public void freezeCountdown(boolean value) { freezeCountdown = value; }
+    public boolean enabled() { return enabled; }
+    public void enabled(boolean value) { enabled = value; }
+    public String barrierMaterial() { return barrierMaterial; }
+    public void barrierMaterial(String value) {
+        org.bukkit.Material material = org.bukkit.Material.matchMaterial(value == null ? "" : value);
+        if (material != null && material.isBlock()
+                && (material.name().endsWith("GLASS") || material.name().endsWith("STAINED_GLASS")))
+            barrierMaterial = material.name();
+    }
+    public void cycleBarrier() {
+        String[] choices = {"GLASS", "RED_STAINED_GLASS", "BLUE_STAINED_GLASS",
+            "GREEN_STAINED_GLASS", "BLACK_STAINED_GLASS", "WHITE_STAINED_GLASS", "PURPLE_STAINED_GLASS"};
+        int index = java.util.Arrays.asList(choices).indexOf(barrierMaterial);
+        barrierMaterial = choices[(index + 1) % choices.length];
+    }
     public Map<String, Integer> effects() { return effectLevels; }
     public int effectLevel(String key) { return effectLevels.getOrDefault(key, 0); }
     public void cycleEffect(String key) {
