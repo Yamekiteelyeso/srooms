@@ -1,4 +1,4 @@
-# SRooms 1.2.1
+# SRooms 1.3.0
 
 **Paper 1.20.1 · Java 17 · Maven · Sin dependencias obligatorias**
 
@@ -30,6 +30,49 @@ Compila con **mvn clean package** o descarga el JAR desde el artifact de GitHub 
 | /srooms reload | Recargar ajustes y mensajes | srooms.admin |
 | /srooms cancel | Cancelar selección | srooms.admin |
 
+## SRooms 1.3 — Sistemas competitivos y administración avanzada
+
+**Seguridad de inventarios:** cada arena puede usar un kit específico (armadura, manos e inventario). Al entrar se almacena una copia de recuperación **antes** de sustituir los objetos; al salir, morir o reconectarse tras un apagado inesperado se intenta restaurar el estado original. El kit se administra con los comandos indicados abajo. Los objetos del kit no se pueden tirar ni guardar en contenedores mientras juegas. Los kits están **desactivados por defecto**.
+
+**Ranking opcional:** activa el botón "Combate Ranked" en `/srooms roomconfig <room>` para que victorias, derrotas y empates modifiquen el ELO. Cada jugador comienza con 1000 puntos en la primera versión donde se usa el sistema. El factor K por defecto es 32 y se modifica en `ranked.k-factor`. Combates casuales siguen contando para estadísticas pero **no** modifican ELO.
+
+**Historial:** registra las últimas partidas completadas en `history.yml`, incluyendo arena, jugadores, ganador o empate y marca de tiempo. Nunca se registran como victorias los duelos cancelados antes del inicio.
+
+**Tiempo de espera:** el primer jugador dispone de 120 segundos predeterminados para encontrar rival; puedes cambiar `duel.waiting-timeout-seconds` o configurarlo como 0 para desactivar el límite.
+
+**Herramientas de administración:** una posición de salida segura configurable con `/srooms setexit`, reinicio instantáneo de una room mediante `/srooms reset` (sin regalar victorias), restauración de proyectiles y protección contra pistones, fuego y líquidos que podrían dañar una arena.
+
+### Comandos nuevos de 1.3
+
+| Comando | Función | Permiso |
+| --- | --- | --- |
+| `/srooms kit save <room>` | Guarda el inventario y la armadura actuales como kit de la arena | srooms.admin |
+| `/srooms kit clear <room>` | Elimina y desactiva el kit de la room | srooms.admin |
+| `/srooms kit info <room>` | Estado del kit | srooms.admin |
+| `/srooms setexit` | Guarda tu ubicación como salida global segura | srooms.admin |
+| `/srooms reset <room>` | Cancela un 1v1 atascado sin premiar a nadie | srooms.admin |
+| `/srooms top elo` | Top 10 por rating ELO | srooms.use |
+| `/srooms history [room]` | Últimos combates, globales o de una arena | srooms.use |
+
+### Configuración rápida
+
+```yaml
+duel:
+  waiting-timeout-seconds: 120
+ranked:
+  k-factor: 32
+kits:
+  block-containers: true
+history:
+  max-entries: 200
+```
+
+**Activar un kit:** equipa al administrador con los objetos deseados, ejecuta `/srooms kit save Box1` y activa el botón del kit en `/srooms roomconfig Box1`. Nunca es obligatorio usar kits. La partida con kit intenta restaurar inventario, experiencia, salud, modo de juego, vuelo, comida y efectos anteriores al finalizar, incluso cuando `keep-inventory` de la arena está desactivado.
+
+**Datos y migración:** los archivos nuevos son `kits.yml`, `kit-recovery.yml` y `history.yml`. Los `rooms.yml` y `stats.yml` existentes conservan sus valores, se agregan solamente claves nuevas; haz una copia de `plugins/SRooms/` antes de actualizar. Si el servidor se apaga durante una partida con kit, el inventario se recupera al volver a entrar usando el respaldo si todavía existe; por seguridad, cada respaldo solo se consume una vez.
+
+**Seguridad:** no prometemos restauración perfecta ante cualquier fallo físico del disco, mods que reemplacen inventarios ni plugins que modifiquen eventos a posteriori. Prueba los kits y la interacción con otros plugins en un servidor de ensayo antes de activarlos para todos.
+
 ## Crear una room
 
 1. /srooms createroom — hacha: dos esquinas de zona A, luego de zona B.
@@ -37,7 +80,7 @@ Compila con **mvn clean package** o descarga el JAR desde el artifact de GitHub 
 3. /srooms nameroom Box1
 4. /srooms roomconfig Box1 — define spawn A/B desde cada zona si no hay suelo seguro en el centro.
 
-## Correcciones 1.2.1
+## Correcciones 1.3.0
 
 - Un jugador que abandona en la cuenta regresiva cancela la pelea. Ya no se anuncia un ganador falso, ni se dan recompensas o estadísticas antes de comenzar.
 - La entrada a regiones vacías queda protegida: usuarios que no estén inscritos no pueden pasearse por una room (configurable con access.protect-empty-rooms). Los administradores pueden entrar a rooms libres.
@@ -74,7 +117,7 @@ Las arenas previas se cargan sin borrarse. Los archivos globales se amplían con
 
 Comprueba creación, selección, reapertura, duelos con dos y tres jugadores, entrada automática, empate por timeout, BossBar, stats, protección de construcción, restitución de jugador, premios opt-in y persistencia después del reinicio.
 
-**Build:** mvn clean package => target/SRooms-1.2.1.jar.
+**Build y pruebas:** mvn clean verify => target/SRooms-1.3.0.jar.
 
 **Nota:** la compilación por CI valida que el proyecto genere el JAR; antes de producción comprueba los flujos en un servidor de prueba Paper 1.20.1.
 
