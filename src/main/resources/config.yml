@@ -1,5 +1,5 @@
 # ================================================================
-# SRooms 1.2.0 | Paper 1.20.1 | Java 17
+# SRooms 1.2.1 | Paper 1.20.1 | Java 17
 # Todas las arenas son 1v1. Los ajustes de cada arena se guardan
 # en rooms.yml y pueden modificarse desde /srooms roomconfig <room>.
 # ================================================================
@@ -9,6 +9,12 @@ protection:
   # El plugin NO duplica los drops al romper; los bloques colocados
   # no se reembolsan a sus propietarios.
   max-edited-blocks: 4096
+
+# Las arenas (incluso vacías) pueden rechazar visitantes que no
+# se unieron a un 1v1. Administradores pueden entrar a salas libres.
+# Si walk-in está activo, un jugador con srooms.use puede entrar andando.
+access:
+  protect-empty-rooms: true
 
 selection:
   # Protege contra selecciones enormes que puedan generar lag.
