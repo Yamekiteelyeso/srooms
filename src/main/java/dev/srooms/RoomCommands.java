@@ -32,7 +32,7 @@ public final class RoomCommands implements CommandExecutor, TabCompleter {
         String sub = args[0].toLowerCase(Locale.ROOT);
         boolean admin = switch (sub) {
             case "createroom", "nameroom", "roomconfig", "config",
-                    "deleteroom", "reopen", "cancel" -> true;
+                    "deleteroom", "reopen", "cancel", "reload", "duration" -> true;
             default -> false;
         };
         if (!sender.hasPermission(admin ? "srooms.admin" : "srooms.use")) {
@@ -41,6 +41,51 @@ public final class RoomCommands implements CommandExecutor, TabCompleter {
         }
 
         switch (sub) {
+            case "reload" -> {
+                plugin.reloadSettings();
+                plugin.msg(sender, "reloaded");
+            }
+            case "duration" -> {
+                if (args.length != 3) { plugin.msg(sender, "usage-duration"); return true; }
+                Room room = plugin.rooms().get(args[1]);
+                if (room == null) { plugin.msg(sender, "unknown-room"); return true; }
+                if (plugin.duels().isOccupied(room)) { plugin.msg(sender, "room-occupied"); return true; }
+                int seconds;
+                try { seconds = Integer.parseInt(args[2]); }
+                catch (NumberFormatException ex) { plugin.msg(sender, "invalid-duration"); return true; }
+                if (seconds < 30 || seconds > 1800) { plugin.msg(sender, "invalid-duration"); return true; }
+                room.duelDuration(seconds);
+                plugin.rooms().save();
+                plugin.msg(sender, "duration-configured", "room", room.name(), "seconds", String.valueOf(seconds));
+            }
+            case "stats" -> {
+                StatsManager.Record stats;
+                if (args.length >= 2) stats = plugin.stats().find(args[1]);
+                else if (sender instanceof Player player) stats = plugin.stats().get(player);
+                else { plugin.msg(sender, "usage-stats"); return true; }
+                if (stats == null) { plugin.msg(sender, "stats-empty"); return true; }
+                plugin.msg(sender, "stats-title", "player", stats.name());
+                plugin.msg(sender, "stats-line", "wins", String.valueOf(stats.wins()),
+                        "losses", String.valueOf(stats.losses()),
+                        "streak", String.valueOf(stats.streak()),
+                        "best", String.valueOf(stats.bestStreak()),
+                        "rate", String.format(Locale.ROOT, "%.1f", stats.winRate()));
+            }
+            case "gui" -> {
+                if (!(sender instanceof Player player)) { plugin.msg(sender, "only-player"); return true; }
+                plugin.browser().open(player, 0);
+            }
+            case "top" -> {
+                plugin.msg(sender, "top-title");
+                int rank = 0;
+                for (StatsManager.Record record : plugin.stats().top(10)) {
+                    if (record.wins() == 0) continue;
+                    plugin.msg(sender, "top-entry", "rank", String.valueOf(++rank),
+                            "player", record.name(), "wins", String.valueOf(record.wins()),
+                            "streak", String.valueOf(record.streak()));
+                }
+                if (rank == 0) plugin.msg(sender, "stats-empty");
+            }
             case "createroom" -> {
                 if (!(sender instanceof Player player)) {
                     plugin.msg(sender, "only-player");
@@ -147,7 +192,8 @@ public final class RoomCommands implements CommandExecutor, TabCompleter {
                         "players", String.valueOf(plugin.duels().participants(room)),
                         "status", plugin.duels().state(room),
                         "keep", room.keepInventory() ? "Sí" : "No",
-                        "seconds", String.valueOf(room.reopenDelay()));
+                        "seconds", String.valueOf(room.reopenDelay()),
+                        "duration", String.valueOf(room.duelDuration()));
             }
             default -> plugin.msg(sender, "unknown-command");
         }
@@ -170,17 +216,22 @@ public final class RoomCommands implements CommandExecutor, TabCompleter {
         List<String> possible = new ArrayList<>();
         if (args.length == 1) {
             if (sender.hasPermission("srooms.use"))
-                possible.addAll(Arrays.asList("help", "list", "join", "leave", "info"));
+                possible.addAll(Arrays.asList("help", "list", "join", "leave", "info", "stats", "top", "gui"));
             if (sender.hasPermission("srooms.admin"))
-                possible.addAll(Arrays.asList("createroom", "nameroom", "roomconfig", "deleteroom", "reopen", "cancel"));
+                possible.addAll(Arrays.asList("createroom", "nameroom", "roomconfig", "deleteroom", "reopen", "duration", "reload", "cancel"));
         } else if (args.length == 2) {
             String sub = args[0].toLowerCase(Locale.ROOT);
-            if (Arrays.asList("join", "info", "roomconfig", "config", "deleteroom", "reopen").contains(sub)) {
+            if (Arrays.asList("join", "info", "roomconfig", "config", "deleteroom", "reopen", "duration").contains(sub)) {
                 if (sender.hasPermission(sub.equals("join") || sub.equals("info") ? "srooms.use" : "srooms.admin"))
                     for (Room room : plugin.rooms().all()) possible.add(room.name());
             }
+            if (sub.equals("stats")) {
+                for (Player online : plugin.getServer().getOnlinePlayers()) possible.add(online.getName());
+            }
         } else if (args.length == 3 && args[0].equalsIgnoreCase("reopen") && sender.hasPermission("srooms.admin")) {
             possible.addAll(Arrays.asList("0", "5", "10", "15", "30", "60"));
+        } else if (args.length == 3 && args[0].equalsIgnoreCase("duration") && sender.hasPermission("srooms.admin")) {
+            possible.addAll(Arrays.asList("60", "120", "180", "300", "600", "900"));
         }
         String start = args[args.length - 1].toLowerCase(Locale.ROOT);
         return possible.stream().filter(value -> value.toLowerCase(Locale.ROOT).startsWith(start)).sorted().toList();

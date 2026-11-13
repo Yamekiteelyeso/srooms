@@ -3,8 +3,14 @@ package dev.srooms;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.GameMode;
+import org.bukkit.boss.BossBar;
+import org.bukkit.boss.BarColor;
+import org.bukkit.boss.BarStyle;
 import org.bukkit.World;
 import org.bukkit.block.Block;
+import org.bukkit.block.data.BlockData;
+import org.bukkit.block.TileState;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
@@ -33,10 +39,15 @@ public final class DuelManager {
         final Location location;
         final double health;
         final int food, fireTicks;
+        final GameMode gameMode;
+        final boolean allowFlight, flying;
         final float saturation, exhaustion;
         final Collection<PotionEffect> potions;
         Snapshot(Player player) {
             location = player.getLocation().clone();
+            gameMode = player.getGameMode();
+            allowFlight = player.getAllowFlight();
+            flying = player.isFlying();
             health = player.getHealth();
             food = player.getFoodLevel();
             fireTicks = player.getFireTicks();
@@ -53,6 +64,9 @@ public final class DuelManager {
         String secondName;
         Phase phase = Phase.WAITING;
         BukkitTask countdownTask;
+        BukkitTask combatTask;
+        BossBar timerBar;
+        final Map<String, BlockData> changedBlocks = new LinkedHashMap<>();
         Match(Room room, Player first) {
             this.room = room;
             this.first = first.getUniqueId();
@@ -76,6 +90,36 @@ public final class DuelManager {
         restoreAllRecovery();
     }
 
+    public boolean recordWorldEdit(Player player, Block block, BlockData original) {
+        Match match = players.get(player.getUniqueId());
+        if (match == null || match.phase != Phase.FIGHT || !match.room.allowBuild()
+                || !match.room.contains(block.getLocation()) || match.room.gate().contains(block.getLocation())
+                || block.getState() instanceof TileState) return false;
+        String key = block.getX() + "_" + block.getY() + "_" + block.getZ();
+        if (!match.changedBlocks.containsKey(key)) {
+            int maximum = Math.max(1, plugin.getConfig().getInt("protection.max-edited-blocks", 4096));
+            if (match.changedBlocks.size() >= maximum) return false;
+            match.changedBlocks.put(key, original.clone());
+        }
+        return true;
+    }
+
+    private void restoreWorldEdits(Match match) {
+        if (match.changedBlocks.isEmpty()) return;
+        World world = match.room.a().world();
+        if (world == null) return;
+        for (Map.Entry<String, BlockData> edit : match.changedBlocks.entrySet()) {
+            try {
+                String[] xyz = edit.getKey().split("_");
+                world.getBlockAt(Integer.parseInt(xyz[0]), Integer.parseInt(xyz[1]),
+                        Integer.parseInt(xyz[2])).setBlockData(edit.getValue(), false);
+            } catch (Exception ex) {
+                plugin.getLogger().warning("No se pudo restaurar bloque en " + edit.getKey() + ": " + ex.getMessage());
+            }
+        }
+        match.changedBlocks.clear();
+    }
+
     public boolean isPlaying(Player player) { return players.containsKey(player.getUniqueId()); }
     public boolean isJoining(Player player) { return joining.contains(player.getUniqueId()); }
     public Room playerRoom(Player player) {
@@ -97,6 +141,10 @@ public final class DuelManager {
         if (reopeningAt.containsKey(roomKey(room))) return "REAPERTURA " + reopenRemaining(room) + "s";
         return match == null ? "LIBRE" : match.phase.name();
     }
+    public boolean isCountingDown(Player player) {
+        Match match = players.get(player.getUniqueId());
+        return match != null && match.phase == Phase.COUNTDOWN;
+    }
     public boolean isFighting(Player player) {
         Match match = players.get(player.getUniqueId());
         return match != null && match.phase == Phase.FIGHT;
@@ -108,6 +156,7 @@ public final class DuelManager {
     }
 
     public void join(Player player, Room room) {
+        if (!room.enabled()) { plugin.msg(player, "room-disabled", "room", room.name()); return; }
         if (isPlaying(player)) { plugin.msg(player, "already-in-room"); return; }
         String key = roomKey(room);
         if (reopeningAt.containsKey(key)) {
@@ -155,6 +204,10 @@ public final class DuelManager {
         }
         snapshots.put(player.getUniqueId(), beforeTeleport);
         players.put(player.getUniqueId(), match);
+        player.setGameMode(GameMode.SURVIVAL);
+        player.setAllowFlight(false);
+        player.setFlying(false);
+        plugin.playSound(player, "join");
         applyRoomSettings(player, room);
         ejectIntruders(room);
         if (match.first.equals(player.getUniqueId())) {
@@ -204,8 +257,11 @@ public final class DuelManager {
                 if (remaining == 0) {
                     match.phase = Phase.FIGHT;
                     openGate(match.room);
+                    startCombatTimer(match);
                     plugin.msg(a, "duel-start");
                     plugin.msg(b, "duel-start");
+                    plugin.playSound(a, "start");
+                    plugin.playSound(b, "start");
                     a.sendTitle(SRoomsPlugin.color("&a&l¡PELEA!"), "", 0, 30, 10);
                     b.sendTitle(SRoomsPlugin.color("&a&l¡PELEA!"), "", 0, 30, 10);
                     cancel();
@@ -214,13 +270,49 @@ public final class DuelManager {
                 String title = SRoomsPlugin.color("&b&l" + remaining);
                 a.sendTitle(title, SRoomsPlugin.color("&7Prepárate"), 0, 24, 0);
                 b.sendTitle(title, SRoomsPlugin.color("&7Prepárate"), 0, 24, 0);
+                plugin.playSound(a, "countdown");
+                plugin.playSound(b, "countdown");
                 remaining--;
             }
         }.runTaskTimer(plugin, 0L, 20L);
     }
 
-    private Material gateMaterial() {
-        Material material = Material.matchMaterial(plugin.getConfig().getString("duel.gate-material", "GLASS"));
+    private void startCombatTimer(Match match) {
+        int max = match.room.duelDuration();
+        if (plugin.getConfig().getBoolean("duel.bossbar.enabled", true)) {
+            BossBar bar = Bukkit.createBossBar(plugin.raw("timer-title",
+                            "seconds", String.valueOf(max)),
+                    BarColor.BLUE, BarStyle.SOLID);
+            match.timerBar = bar;
+            Player first = Bukkit.getPlayer(match.first);
+            Player second = Bukkit.getPlayer(match.second);
+            if (first != null) bar.addPlayer(first);
+            if (second != null) bar.addPlayer(second);
+        }
+        match.combatTask = new BukkitRunnable() {
+            int remaining = max;
+            @Override
+            public void run() {
+                if (matches.get(roomKey(match.room)) != match || match.phase != Phase.FIGHT) {
+                    cancel();
+                    return;
+                }
+                if (remaining <= 0) {
+                    cancel();
+                    finish(match, null, false);
+                    return;
+                }
+                if (match.timerBar != null) {
+                    match.timerBar.setTitle(plugin.raw("timer-title", "seconds", String.valueOf(remaining)));
+                    match.timerBar.setProgress(Math.max(0.0, Math.min(1.0, (double) remaining / max)));
+                }
+                remaining--;
+            }
+        }.runTaskTimer(plugin, 20L, 20L);
+    }
+
+    private Material gateMaterial(Room room) {
+        Material material = Material.matchMaterial(room.barrierMaterial());
         return material != null && material.isBlock() && material.name().endsWith("GLASS")
                 ? material : Material.GLASS;
     }
@@ -239,7 +331,7 @@ public final class DuelManager {
                     yaml.set(path + ".blocks." + x + "_" + y + "_" + z, block.getBlockData().getAsString());
                 }
         if (!saveRecovery(yaml)) return false;
-        Material material = gateMaterial();
+        Material material = gateMaterial(room);
         for (int x = gate.minX(); x <= gate.maxX(); x++)
             for (int y = gate.minY(); y <= gate.maxY(); y++)
                 for (int z = gate.minZ(); z <= gate.maxZ(); z++)
@@ -251,7 +343,7 @@ public final class DuelManager {
         Cuboid gate = room.gate();
         World world = gate.world();
         if (world == null) return;
-        Material glass = gateMaterial();
+        Material glass = gateMaterial(room);
         for (int x = gate.minX(); x <= gate.maxX(); x++)
             for (int y = gate.minY(); y <= gate.maxY(); y++)
                 for (int z = gate.minZ(); z <= gate.maxZ(); z++)
@@ -262,13 +354,15 @@ public final class DuelManager {
         int seconds = room.reopenDelay();
         if (seconds <= 0) {
             restoreGate(room);
-            plugin.broadcast("room-ready", "room", room.name());
+            if (plugin.getConfig().getBoolean("announcements.broadcast-ready", true))
+                plugin.broadcast("room-ready", "room", room.name());
             return;
         }
         String key = roomKey(room);
         sealGateForReopen(room);
         reopeningAt.put(key, System.currentTimeMillis() + seconds * 1000L);
-        plugin.broadcast("room-cooldown", "room", room.name(), "seconds", String.valueOf(seconds));
+        if (plugin.getConfig().getBoolean("announcements.broadcast-ready", true))
+            plugin.broadcast("room-cooldown", "room", room.name(), "seconds", String.valueOf(seconds));
         BukkitTask task = Bukkit.getScheduler().runTaskLater(plugin, () -> {
             reopeningTasks.remove(key);
             reopeningAt.remove(key);
@@ -388,20 +482,33 @@ public final class DuelManager {
         if (matches.get(key) != match) return;
         matches.remove(key);
         if (match.countdownTask != null) match.countdownTask.cancel();
+        if (match.combatTask != null) match.combatTask.cancel();
+        if (match.timerBar != null) {
+            match.timerBar.removeAll();
+            match.timerBar = null;
+        }
+        boolean played = match.phase == Phase.FIGHT;
         UUID winner = loser == null ? null : loser.equals(match.first) ? match.second : match.first;
         if (loser != null && winner != null) {
             Player win = Bukkit.getPlayer(winner), lose = Bukkit.getPlayer(loser);
             String winnerName = winner.equals(match.first) ? match.firstName : match.secondName;
             String loserName = loser.equals(match.first) ? match.firstName : match.secondName;
-            plugin.broadcast("duel-result", "room", match.room.name(),
-                    "winner", winnerName, "loser", loserName);
+            if (played) {
+                plugin.stats().result(winner, winnerName, loser, loserName);
+                rewardWinner(match.room, winnerName, loserName);
+            }
+            if (plugin.getConfig().getBoolean("announcements.broadcast-results", true))
+                plugin.broadcast("duel-result", "room", match.room.name(),
+                        "winner", winnerName, "loser", loserName);
             if (win != null) {
                 plugin.msg(win, "duel-win", "loser", loserName);
+                plugin.playSound(win, "win");
                 win.sendTitle(plugin.raw("victory-title"), plugin.raw("victory-subtitle",
                         "loser", loserName), 5, 50, 10);
             }
             if (lose != null && !died) {
                 plugin.msg(lose, "duel-lose", "winner", winnerName);
+                plugin.playSound(lose, "lose");
                 lose.sendTitle(plugin.raw("defeat-title"), plugin.raw("defeat-subtitle",
                         "winner", winnerName), 5, 50, 10);
             }
@@ -418,13 +525,17 @@ public final class DuelManager {
             Player online = Bukkit.getPlayer(id);
             if (online != null) restorePlayer(online, snapshot, true);
         }
-        if (winner == null) {
+        restoreWorldEdits(match);
+        if (winner == null && played) {
+            if (plugin.getConfig().getBoolean("announcements.broadcast-results", true))
+                plugin.broadcast("duel-draw", "room", match.room.name(),
+                        "a", match.firstName, "b", match.secondName);
+            beginReopen(match.room);
+        } else if (winner == null) {
             restoreGate(match.room);
             Player first = Bukkit.getPlayer(match.first);
             if (first != null) plugin.msg(first, "duel-cancelled");
-        } else {
-            beginReopen(match.room);
-        }
+        } else beginReopen(match.room);
     }
 
     public void handleRespawn(PlayerRespawnEvent event) {
@@ -436,8 +547,26 @@ public final class DuelManager {
         });
     }
 
+    private void rewardWinner(Room room, String winner, String loser) {
+        if (!room.rewardWinner() || !plugin.getConfig().getBoolean("rewards.enabled", false)) return;
+        int count = 0;
+        for (String template : plugin.getConfig().getStringList("rewards.winner-commands")) {
+            if (++count > 20) break;
+            String command = template.replace("%winner%", winner)
+                    .replace("%loser%", loser).replace("%room%", room.name()).trim();
+            if (command.startsWith("/")) command = command.substring(1);
+            if (!command.isEmpty()) {
+                try { Bukkit.dispatchCommand(Bukkit.getConsoleSender(), command); }
+                catch (Exception ex) { plugin.getLogger().warning("Recompensa fallida: " + ex.getMessage()); }
+            }
+        }
+    }
+
     private void restorePlayer(Player player, Snapshot snapshot, boolean teleport) {
         if (teleport) player.teleport(snapshot.location);
+        player.setGameMode(snapshot.gameMode);
+        player.setAllowFlight(snapshot.allowFlight);
+        if (snapshot.allowFlight) player.setFlying(snapshot.flying);
         for (PotionEffect effect : player.getActivePotionEffects()) player.removePotionEffect(effect.getType());
         for (PotionEffect effect : snapshot.potions) player.addPotionEffect(effect);
         player.setFoodLevel(snapshot.food);

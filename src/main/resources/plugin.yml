@@ -1,5 +1,5 @@
 name: SRooms
-version: '1.1.0'
+version: '1.2.0'
 main: dev.srooms.SRoomsPlugin
 api-version: '1.20'
 author: SRooms
@@ -7,7 +7,7 @@ description: Rooms PvP 1v1 con configuracion independiente
 commands:
   srooms:
     description: Gestiona y juega en rooms 1v1
-    usage: /srooms <help|list|join|leave|info|createroom|nameroom|roomconfig|deleteroom|reopen>
+    usage: /srooms <help|gui|stats|top|join|leave|list|createroom|roomconfig|reopen|duration|reload>
 permissions:
   srooms.use:
     description: Permite jugar en rooms

@@ -20,10 +20,14 @@ public final class SRoomsPlugin extends JavaPlugin {
     private SelectionManager selections;
     private DuelManager duels;
     private ConfigMenu menu;
+    private StatsManager stats;
+    private RoomsBrowser browser;
 
     @Override
     public void onEnable() {
         saveDefaultConfig();
+        getConfig().options().copyDefaults(true);
+        saveConfig();
         File messagesFile = new File(getDataFolder(), "messages.yml");
         if (!messagesFile.exists()) saveResource("messages.yml", false);
         messages = YamlConfiguration.loadConfiguration(messagesFile);
@@ -69,9 +73,11 @@ public final class SRoomsPlugin extends JavaPlugin {
             getLogger().warning("No se pudieron actualizar los mensajes: " + ex.getMessage());
         }
         registry = new RoomRegistry(this);
+        stats = new StatsManager(this);
         selections = new SelectionManager(this);
         duels = new DuelManager(this);
         menu = new ConfigMenu(this);
+        browser = new RoomsBrowser(this);
         RoomCommands commands = new RoomCommands(this);
         for (String name : new String[]{"srooms"}) {
             Objects.requireNonNull(getCommand(name), name + " missing in plugin.yml").setExecutor(commands);
@@ -79,6 +85,7 @@ public final class SRoomsPlugin extends JavaPlugin {
         }
         getServer().getPluginManager().registerEvents(new GameListener(this), this);
         getServer().getPluginManager().registerEvents(menu, this);
+        getServer().getPluginManager().registerEvents(browser, this);
         getLogger().info("SRooms iniciado con " + registry.all().size() + " rooms.");
     }
 
@@ -87,12 +94,40 @@ public final class SRoomsPlugin extends JavaPlugin {
         if (duels != null) duels.shutdown();
         if (selections != null) selections.shutdown();
         if (registry != null) registry.save();
+        if (stats != null) stats.save();
     }
 
     public RoomRegistry rooms() { return registry; }
     public SelectionManager selections() { return selections; }
     public DuelManager duels() { return duels; }
     public ConfigMenu menu() { return menu; }
+    public StatsManager stats() { return stats; }
+    public RoomsBrowser browser() { return browser; }
+
+    public void reloadSettings() {
+        reloadConfig();
+        messages = YamlConfiguration.loadConfiguration(new File(getDataFolder(), "messages.yml"));
+        try (InputStreamReader reader = new InputStreamReader(
+                Objects.requireNonNull(getResource("messages.yml")), StandardCharsets.UTF_8)) {
+            messages.setDefaults(YamlConfiguration.loadConfiguration(reader));
+        } catch (IOException ex) {
+            getLogger().warning("No se pudieron recargar los mensajes: " + ex.getMessage());
+        }
+    }
+
+    public void playSound(org.bukkit.entity.Player player, String setting) {
+        if (!getConfig().getBoolean("sounds.enabled", true)) return;
+        String name = getConfig().getString("sounds." + setting, "");
+        if (name == null || name.isBlank()) return;
+        try {
+            org.bukkit.Sound sound = org.bukkit.Sound.valueOf(name.toUpperCase(java.util.Locale.ROOT));
+            player.playSound(player.getLocation(), sound,
+                    (float) Math.max(0.0, Math.min(2.0, getConfig().getDouble("sounds.volume", 0.85))),
+                    (float) Math.max(0.5, Math.min(2.0, getConfig().getDouble("sounds.pitch", 1.0))));
+        } catch (IllegalArgumentException ex) {
+            getLogger().warning("Sonido desconocido: " + name);
+        }
+    }
 
     public void msg(CommandSender target, String key, String... replacements) {
         String value = messages.getString(key, key);

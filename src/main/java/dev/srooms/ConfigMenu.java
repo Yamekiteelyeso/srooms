@@ -69,6 +69,17 @@ public final class ConfigMenu implements Listener {
         toggle(menu, 13, Material.COOKED_BEEF, "Hambre congelada", room.lockHunger(), "No perder puntos de hambre");
         toggle(menu, 14, Material.GOLDEN_APPLE, "Curar al entrar", room.healOnJoin(), "Restaura salud y comida al empezar");
         toggle(menu, 15, Material.MILK_BUCKET, "Limpiar efectos", room.clearEffects(), "Quitar pociones anteriores mientras peleas");
+        toggle(menu, 16, Material.OAK_DOOR, "Entrada automática", room.walkIn(), "Entrar caminando a la región");
+        toggle(menu, 17, Material.PAPER, "Bloquear comandos", room.blockCommands(), "Desactiva comandos durante el duelo");
+        toggle(menu, 27, Material.ENDER_PEARL, "Bloquear teletransporte", room.blockEnderPearls(), "Impide ender pearls y chorus fruit");
+        toggle(menu, 28, Material.ICE, "Congelar inicio", room.freezeCountdown(), "Impide moverse en la cuenta atrás");
+        toggle(menu, 30, Material.LEVER, "Room habilitada", room.enabled(), "Activa o desactiva nuevos combates");
+        toggle(menu, 39, Material.DIAMOND, "Recompensa al ganador", room.rewardWinner(),
+                "Ejecuta comandos configurados al ganar");
+        Material barrier = Material.matchMaterial(room.barrierMaterial());
+        if (barrier == null) barrier = Material.GLASS;
+        menu.setItem(31, item(barrier, "&bCristal de cierre", "&7Material actual: &f" + room.barrierMaterial(),
+                "&eClic para cambiar entre 7 colores"));
         Material[] icons = {Material.SUGAR, Material.BLAZE_POWDER, Material.SHIELD,
                 Material.GHAST_TEAR, Material.RABBIT_FOOT, Material.MAGMA_CREAM,
                 Material.GOLDEN_PICKAXE, Material.ENDER_EYE};
@@ -90,6 +101,10 @@ public final class ConfigMenu implements Listener {
         menu.setItem(34, item(Material.LIME_STAINED_GLASS_PANE, "&aAumentar reapertura",
                 "&7Actual: &f" + room.reopenDelay() + " segundos",
                 "&eClic: +1 segundo", "&eShift + clic: +5 segundos"));
+        menu.setItem(35, item(Material.RECOVERY_COMPASS, "&c-30 segundos de combate",
+                "&7Límite: &f" + room.duelDuration() + " segundos", "&eClic: -30s"));
+        menu.setItem(36, item(Material.CLOCK, "&a+30 segundos de combate",
+                "&7Límite: &f" + room.duelDuration() + " segundos", "&eClic: +30s"));
         menu.setItem(38, item(Material.REDSTONE, "&c-1 segundo", "&7Countdown actual: &f" + room.countdown() + " s"));
         menu.setItem(40, item(Material.EMERALD, "&a+1 segundo", "&7Countdown actual: &f" + room.countdown() + " s"));
         menu.setItem(42, item(Material.LIME_BED, "&aSpawn A", "&7Ubícate dentro de la zona A", "&eClic para fijar tu posicion"));
@@ -120,6 +135,15 @@ public final class ConfigMenu implements Listener {
             case 13 -> room.lockHunger(!room.lockHunger());
             case 14 -> room.healOnJoin(!room.healOnJoin());
             case 15 -> room.clearEffects(!room.clearEffects());
+            case 16 -> room.walkIn(!room.walkIn());
+            case 17 -> room.blockCommands(!room.blockCommands());
+            case 27 -> room.blockEnderPearls(!room.blockEnderPearls());
+            case 28 -> room.freezeCountdown(!room.freezeCountdown());
+            case 30 -> room.enabled(!room.enabled());
+            case 39 -> room.rewardWinner(!room.rewardWinner());
+            case 31 -> room.cycleBarrier();
+            case 35 -> room.duelDuration(room.duelDuration() - 30);
+            case 36 -> room.duelDuration(room.duelDuration() + 30);
             case 32 -> room.reopenDelay(room.reopenDelay() - (event.isShiftClick() ? 5 : 1));
             case 34 -> room.reopenDelay(room.reopenDelay() + (event.isShiftClick() ? 5 : 1));
             case 38 -> room.countdown(room.countdown() - 1);

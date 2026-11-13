@@ -34,6 +34,12 @@ public final class RoomRegistry {
     }
 
     public void add(Room room) {
+        room.walkIn(plugin.getConfig().getBoolean("defaults.walk-in", false));
+        room.blockCommands(plugin.getConfig().getBoolean("defaults.block-commands", true));
+        room.blockEnderPearls(plugin.getConfig().getBoolean("defaults.block-ender-pearls", true));
+        room.freezeCountdown(plugin.getConfig().getBoolean("defaults.freeze-countdown", true));
+        room.duelDuration(plugin.getConfig().getInt("defaults.duel-duration-seconds", 300));
+        room.barrierMaterial(plugin.getConfig().getString("duel.gate-material", "GLASS"));
         rooms.put(room.name().toLowerCase(Locale.ROOT), room);
         save();
     }
@@ -92,6 +98,14 @@ public final class RoomRegistry {
                 room.clearEffects(s.getBoolean("clear-effects", true));
                 room.countdown(s.getInt("countdown", 5));
                 room.reopenDelay(s.getInt("reopen-delay", 10));
+                room.duelDuration(s.getInt("duel-duration", plugin.getConfig().getInt("defaults.duel-duration-seconds", 300)));
+                room.walkIn(s.getBoolean("walk-in", plugin.getConfig().getBoolean("defaults.walk-in", false)));
+                room.blockCommands(s.getBoolean("block-commands", plugin.getConfig().getBoolean("defaults.block-commands", true)));
+                room.blockEnderPearls(s.getBoolean("block-ender-pearls", plugin.getConfig().getBoolean("defaults.block-ender-pearls", true)));
+                room.freezeCountdown(s.getBoolean("freeze-countdown", plugin.getConfig().getBoolean("defaults.freeze-countdown", true)));
+                room.enabled(s.getBoolean("enabled", true));
+                room.rewardWinner(s.getBoolean("reward-winner", false));
+                room.barrierMaterial(s.getString("barrier-material", plugin.getConfig().getString("duel.gate-material", "GLASS")));
                 Location spawnA = s.getLocation("spawn-a");
                 Location spawnB = s.getLocation("spawn-b");
                 if (spawnA != null && room.a().contains(spawnA)) room.spawnA(spawnA);
@@ -127,6 +141,14 @@ public final class RoomRegistry {
             yaml.set(base + ".clear-effects", room.clearEffects());
             yaml.set(base + ".countdown", room.countdown());
             yaml.set(base + ".reopen-delay", room.reopenDelay());
+            yaml.set(base + ".duel-duration", room.duelDuration());
+            yaml.set(base + ".walk-in", room.walkIn());
+            yaml.set(base + ".block-commands", room.blockCommands());
+            yaml.set(base + ".block-ender-pearls", room.blockEnderPearls());
+            yaml.set(base + ".freeze-countdown", room.freezeCountdown());
+            yaml.set(base + ".enabled", room.enabled());
+            yaml.set(base + ".reward-winner", room.rewardWinner());
+            yaml.set(base + ".barrier-material", room.barrierMaterial());
             for (Map.Entry<String, Integer> effect : room.effects().entrySet())
                 yaml.set(base + ".effects." + effect.getKey(), effect.getValue());
         }
