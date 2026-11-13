@@ -95,7 +95,7 @@ public final class DuelManager {
         Match match = matches.get(key);
         if (match != null && match.second != null) { plugin.msg(player, "room-busy"); return; }
         Location spawn = match == null ? room.spawnA() : room.spawnB();
-        if (spawn == null || spawn.getWorld() == null || !room.contains(spawn)) {
+        if (spawn == null || spawn.getWorld() == null || !room.contains(spawn) || room.gate().contains(spawn)) {
             plugin.msg(player, "selection-invalid", "reason", "Spawn invalido. Configuralo con /roomconfig.");
             return;
         }
@@ -283,12 +283,12 @@ public final class DuelManager {
         if (match == null) return;
         Room room = match.room;
         event.setDeathMessage(null);
+        event.setKeepInventory(room.keepInventory());
         if (room.keepInventory()) {
-            event.setKeepInventory(true);
             event.getDrops().clear();
         }
+        event.setKeepLevel(room.keepExperience());
         if (room.keepExperience()) {
-            event.setKeepLevel(true);
             event.setDroppedExp(0);
         }
         finish(match, dead.getUniqueId(), true);
