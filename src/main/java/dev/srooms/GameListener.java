@@ -130,19 +130,22 @@ public final class GameListener implements Listener {
     public void onMove(PlayerMoveEvent event) {
         Player player = event.getPlayer();
         if (event.getTo() == null || plugin.duels().isJoining(player)) return;
+        Room duringCountdown = plugin.duels().playerRoom(player);
+        if (duringCountdown != null && duringCountdown.freezeCountdown()
+                && plugin.duels().isCountingDown(player)
+                && event.getFrom().distanceSquared(event.getTo()) > 0.00001) {
+            Location frozen = event.getFrom().clone();
+            frozen.setYaw(event.getTo().getYaw());
+            frozen.setPitch(event.getTo().getPitch());
+            event.setTo(frozen);
+            return;
+        }
         if (event.getFrom().getBlockX() == event.getTo().getBlockX()
                 && event.getFrom().getBlockY() == event.getTo().getBlockY()
                 && event.getFrom().getBlockZ() == event.getTo().getBlockZ()
                 && event.getFrom().getWorld() == event.getTo().getWorld()) return;
         Room participating = plugin.duels().playerRoom(player);
         if (participating != null) {
-            if (plugin.duels().isCountingDown(player) && participating.freezeCountdown()) {
-                Location frozen = event.getFrom().clone();
-                frozen.setYaw(event.getTo().getYaw());
-                frozen.setPitch(event.getTo().getPitch());
-                event.setTo(frozen);
-                return;
-            }
             if (!participating.contains(event.getTo())) event.setTo(event.getFrom());
             return;
         }
@@ -170,7 +173,7 @@ public final class GameListener implements Listener {
         if (plugin.duels().isJoining(player)) return;
         Room room = plugin.duels().playerRoom(player);
         if (room != null && (event.getTo() == null || !room.contains(event.getTo())
-                || (room.blockEnderPearls() && event.getCause() == TeleportCause.ENDER_PEARL))) {
+                || (room.blockEnderPearls() && (event.getCause() == TeleportCause.ENDER_PEARL || event.getCause() == TeleportCause.CHORUS_FRUIT)))) {
             event.setCancelled(true);
             return;
         }
@@ -209,7 +212,6 @@ public final class GameListener implements Listener {
 
     @EventHandler(ignoreCancelled = true)
     public void onPearl(PlayerInteractEvent event) {
-        if (event.getHand() != EquipmentSlot.HAND) return;
         Room room = plugin.duels().playerRoom(event.getPlayer());
         if (room == null || !room.blockEnderPearls()) return;
         ItemStack used = event.getItem();
