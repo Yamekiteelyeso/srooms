@@ -13,6 +13,8 @@ Plugin de arenas 1v1 para Paper 1.20.1, Java 17.
 - /createroom, /nameroom <nombre>, /roomconfig <nombre>, /deleteroom <nombre> (srooms.admin)
 - /room list, /room join <nombre>, /room leave, /room info <nombre> (srooms.use)
 
+Si el centro de una zona no tiene suelo seguro, entra a /roomconfig <nombre> y marca su spawn manualmente desde dentro de la zona. Nunca coloques un spawn dentro de la barrera.
+
 El primer jugador espera en zona A y el segundo aparece en zona B. La barrera se cierra mientras esperan, se abre tras la cuenta regresiva y se restaura al finalizar. La arena usa el inventario del jugador; la opción keepinventory determina si se conserva al morir.
 
 Los datos se guardan en plugins/SRooms/rooms.yml y la recuperación de barreras en gate-recovery.yml.

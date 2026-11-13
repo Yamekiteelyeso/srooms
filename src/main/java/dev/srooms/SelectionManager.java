@@ -191,6 +191,6 @@ public final class SelectionManager {
         plugin.rooms().add(room);
         drafts.remove(player.getUniqueId());
         plugin.msg(player, "room-created", "room", name);
-        plugin.msg(player, "selection-invalid", "reason", "Configura opciones con /roomconfig " + name);
+        player.sendMessage(SRoomsPlugin.color("&7Configura esta room con &b/roomconfig " + name));
     }
 }
