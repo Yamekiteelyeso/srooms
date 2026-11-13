@@ -1,5 +1,5 @@
 # ================================================================
-# SRooms 1.2.1 | Paper 1.20.1 | Java 17
+# SRooms 1.3.0 | Paper 1.20.1 | Java 17
 # Todas las arenas son 1v1. Los ajustes de cada arena se guardan
 # en rooms.yml y pueden modificarse desde /srooms roomconfig <room>.
 # ================================================================
@@ -15,6 +15,8 @@ protection:
 # Si walk-in está activo, un jugador con srooms.use puede entrar andando.
 access:
   protect-empty-rooms: true
+  # Usa /srooms setexit para definir un punto seguro fuera de las rooms.
+  # exit-spawn: (se guarda automáticamente al ejecutar /srooms setexit)
 
 selection:
   # Protege contra selecciones enormes que puedan generar lag.
@@ -31,6 +33,9 @@ defaults:
   duel-duration-seconds: 300       # 30..1800 (5 minutos por defecto)
 
 duel:
+  # 0 = sin límite de espera. Una room libre con un solo jugador
+  # se cancela automáticamente si no llega rival en este intervalo.
+  waiting-timeout-seconds: 120
   gate-material: GLASS             # cristal por defecto; se puede cambiar por room
   bossbar:
     enabled: true                  # barra con cuenta regresiva del combate
@@ -72,3 +77,11 @@ rewards:
   enabled: false
   winner-commands:
     - "give %winner% diamond 1"
+
+# Kits opcionales por arena. Se crean usando /srooms kit save <room>,
+# con todo el inventario y armadura del administrador.
+# Activar el kit después en /srooms roomconfig <room>.
+# kits.yml guarda el kit. kit-recovery.yml respalda inventarios
+# originales mientras un jugador usa un kit.
+kits:
+  block-containers: true
