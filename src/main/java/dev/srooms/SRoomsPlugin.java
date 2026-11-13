@@ -7,6 +7,11 @@ import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.File;
+import java.io.InputStreamReader;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.util.Map;
+import java.util.LinkedHashMap;
 import java.util.Objects;
 
 public final class SRoomsPlugin extends JavaPlugin {
@@ -19,14 +24,56 @@ public final class SRoomsPlugin extends JavaPlugin {
     @Override
     public void onEnable() {
         saveDefaultConfig();
-        if (!new File(getDataFolder(), "messages.yml").exists()) saveResource("messages.yml", false);
-        messages = YamlConfiguration.loadConfiguration(new File(getDataFolder(), "messages.yml"));
+        File messagesFile = new File(getDataFolder(), "messages.yml");
+        if (!messagesFile.exists()) saveResource("messages.yml", false);
+        messages = YamlConfiguration.loadConfiguration(messagesFile);
+        try (InputStreamReader reader = new InputStreamReader(
+                Objects.requireNonNull(getResource("messages.yml")), StandardCharsets.UTF_8)) {
+            YamlConfiguration newDefaults = YamlConfiguration.loadConfiguration(reader);
+            Map<String, String> legacyMessages = new LinkedHashMap<>();
+            legacyMessages.put("prefix", "&8[&bSRooms&8] &7");
+            legacyMessages.put("no-permission", "&cNo tienes permiso.");
+            legacyMessages.put("only-player", "&cSolo jugadores.");
+            legacyMessages.put("unknown-room", "&cEsa room no existe.");
+            legacyMessages.put("already-in-room", "&cYa estas en una room.");
+            legacyMessages.put("room-busy", "&cEsta room ya esta llena.");
+            legacyMessages.put("room-created", "&aRoom &f%room% &acreada.");
+            legacyMessages.put("room-deleted", "&cRoom &f%room% &celiminada.");
+            legacyMessages.put("room-occupied", "&cLa room esta ocupada.");
+            legacyMessages.put("selection-a", "&aMarca los 2 puntos de la zona A.");
+            legacyMessages.put("selection-b", "&aZona A lista. Marca la zona B.");
+            legacyMessages.put("selection-gate", "&aZona B lista. Marca la barrera de cristal con la nueva hacha.");
+            legacyMessages.put("selection-name", "&aCristal listo. Escribe &f/nameroom <nombre>");
+            legacyMessages.put("selection-point", "&7Punto %point% en %stage%: &b%coords%");
+            legacyMessages.put("selection-incomplete", "&cTermina antes la seleccion.");
+            legacyMessages.put("selection-invalid", "&c%reason%");
+            legacyMessages.put("selection-ended", "&7Seleccion cancelada.");
+            legacyMessages.put("joined-wait", "&eEsperando rival en &f%room%&e...");
+            legacyMessages.put("joined-start", "&a¡Rival encontrado!");
+            legacyMessages.put("duel-start", "&a¡PELEA!");
+            legacyMessages.put("duel-win", "&aGanaste contra &f%loser%&a.");
+            legacyMessages.put("duel-lose", "&cPerdiste contra &f%winner%&c.");
+            legacyMessages.put("left-room", "&eSaliste de la room.");
+            legacyMessages.put("not-in-room", "&cNo estas en una room.");
+            legacyMessages.put("gate-unsafe", "&cLa barrera contiene cofres, carteles u otros bloques con datos.");
+
+            // Upgrade unchanged 1.0 texts, but preserve anything edited by the server owner.
+            for (Map.Entry<String, String> old : legacyMessages.entrySet()) {
+                if (old.getValue().equals(messages.getString(old.getKey())))
+                    messages.set(old.getKey(), newDefaults.getString(old.getKey()));
+            }
+            messages.setDefaults(newDefaults);
+            messages.options().copyDefaults(true);
+            messages.save(messagesFile);
+        } catch (IOException ex) {
+            getLogger().warning("No se pudieron actualizar los mensajes: " + ex.getMessage());
+        }
         registry = new RoomRegistry(this);
         selections = new SelectionManager(this);
         duels = new DuelManager(this);
         menu = new ConfigMenu(this);
         RoomCommands commands = new RoomCommands(this);
-        for (String name : new String[]{"createroom", "nameroom", "roomconfig", "deleteroom", "room"}) {
+        for (String name : new String[]{"srooms"}) {
             Objects.requireNonNull(getCommand(name), name + " missing in plugin.yml").setExecutor(commands);
             Objects.requireNonNull(getCommand(name)).setTabCompleter(commands);
         }
@@ -52,6 +99,17 @@ public final class SRoomsPlugin extends JavaPlugin {
         for (int i = 0; i + 1 < replacements.length; i += 2)
             value = value.replace("%" + replacements[i] + "%", replacements[i + 1]);
         target.sendMessage(color(messages.getString("prefix", "&8[&bSRooms&8] &7") + value));
+    }
+
+    public String raw(String key, String... replacements) {
+        String value = messages.getString(key, key);
+        for (int i = 0; i + 1 < replacements.length; i += 2)
+            value = value.replace("%" + replacements[i] + "%", replacements[i + 1]);
+        return color(value);
+    }
+
+    public void broadcast(String key, String... replacements) {
+        getServer().broadcastMessage(color(messages.getString("prefix", "&8[&bSRooms&8] &7")) + raw(key, replacements));
     }
 
     public static String color(String value) {
