@@ -115,8 +115,12 @@ public final class ConfigMenu implements Listener {
                 "&7Límite: &f" + room.duelDuration() + " segundos", "&eClic: +30s"));
         menu.setItem(38, item(Material.REDSTONE, "&c-1 segundo", "&7Countdown actual: &f" + room.countdown() + " s"));
         menu.setItem(40, item(Material.EMERALD, "&a+1 segundo", "&7Countdown actual: &f" + room.countdown() + " s"));
-        menu.setItem(42, item(Material.LIME_BED, "&aSpawn A", "&7Ubícate dentro de la zona A", "&eClic para fijar tu posicion"));
-        menu.setItem(43, item(Material.RED_BED, "&cSpawn B", "&7Ubícate dentro de la zona B", "&eClic para fijar tu posicion"));
+        menu.setItem(42, item(Material.LIME_BED, "&aSpawn jugador 1",
+                "&7Ubícate dentro de la room, fuera del cristal",
+                "&7Y haz clic para guardar la posición"));
+        menu.setItem(43, item(Material.RED_BED, "&cSpawn jugador 2",
+                "&7Ubícate en el lado contrario de la room",
+                "&7Y haz clic para guardar la posición"));
         menu.setItem(49, item(Material.BARRIER, "&cCerrar menú"));
         player.openInventory(menu);
     }
@@ -165,15 +169,27 @@ public final class ConfigMenu implements Listener {
             case 40 -> room.countdown(room.countdown() + 1);
             case 42 -> {
                 Location pos = player.getLocation();
-                if (!room.a().contains(pos)) {
-                    plugin.msg(player, "selection-invalid", "reason", "Debes estar dentro de la zona A.");
+                if (!room.validSpawn(pos)) {
+                    plugin.msg(player, "selection-invalid", "reason",
+                            "Debes estar dentro de la room y fuera del cristal.");
+                    changed = false;
+                } else if (room.configuredSpawnB() != null
+                        && room.configuredSpawnB().distanceSquared(pos) < 1) {
+                    plugin.msg(player, "selection-invalid", "reason",
+                            "Los dos spawns no pueden estar en la misma posición.");
                     changed = false;
                 } else room.spawnA(pos);
             }
             case 43 -> {
                 Location pos = player.getLocation();
-                if (!room.b().contains(pos)) {
-                    plugin.msg(player, "selection-invalid", "reason", "Debes estar dentro de la zona B.");
+                if (!room.validSpawn(pos)) {
+                    plugin.msg(player, "selection-invalid", "reason",
+                            "Debes estar dentro de la room y fuera del cristal.");
+                    changed = false;
+                } else if (room.configuredSpawnA() != null
+                        && room.configuredSpawnA().distanceSquared(pos) < 1) {
+                    plugin.msg(player, "selection-invalid", "reason",
+                            "Los dos spawns no pueden estar en la misma posición.");
                     changed = false;
                 } else room.spawnB(pos);
             }
