@@ -175,6 +175,7 @@ public final class DuelManager {
     public String state(Room room) {
         Match match = matches.get(room.name().toLowerCase(java.util.Locale.ROOT));
         if (reopeningAt.containsKey(roomKey(room))) return "REAPERTURA " + reopenRemaining(room) + "s";
+        if (match == null && !room.enabled()) return "DESACTIVADA";
         return match == null ? "LIBRE" : match.phase.name();
     }
     public boolean isCountingDown(Player player) {
@@ -464,14 +465,20 @@ public final class DuelManager {
         World world = room.a().world();
         if (world == null) return null;
         Location configured = plugin.getConfig().getLocation("access.exit-spawn");
-        if (configured != null && configured.getWorld() != null && !room.contains(configured))
-            return configured;
+        if (configured != null && configured.getWorld() != null
+                && plugin.rooms().at(configured) == null) return configured;
         Location spawn = world.getSpawnLocation();
-        if (!room.contains(spawn)) return spawn;
+        if (plugin.rooms().at(spawn) == null) return spawn;
         int x = Math.max(room.a().maxX(), Math.max(room.b().maxX(), room.gate().maxX())) + 12;
         int z = Math.max(room.a().maxZ(), Math.max(room.b().maxZ(), room.gate().maxZ())) + 12;
-        int y = world.getHighestBlockYAt(x, z) + 1;
-        return new Location(world, x + 0.5, y, z + 0.5);
+        for (int attempt = 0; attempt < 32; attempt++) {
+            int cx = x + attempt * 16;
+            int cz = z + attempt * 16;
+            int y = world.getHighestBlockYAt(cx, cz) + 1;
+            Location exit = new Location(world, cx + 0.5, y, cz + 0.5);
+            if (plugin.rooms().at(exit) == null) return exit;
+        }
+        return spawn;
     }
 
     private void openGate(Room room) {
