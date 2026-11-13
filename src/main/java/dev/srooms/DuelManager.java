@@ -589,7 +589,7 @@ public final class DuelManager {
             String winnerName = winner.equals(match.first) ? match.firstName : match.secondName;
             String loserName = loser.equals(match.first) ? match.firstName : match.secondName;
             if (played) {
-                plugin.stats().result(winner, winnerName, loser, loserName);
+                plugin.stats().result(winner, winnerName, loser, loserName, match.room.ranked());
                 rewardWinner(match.room, winnerName, loserName);
             }
             if (plugin.getConfig().getBoolean("announcements.broadcast-results", true))
@@ -629,6 +629,8 @@ public final class DuelManager {
         restoreWorldEdits(match);
         clearProjectiles(match);
         if (winner == null && played) {
+            plugin.stats().draw(match.first, match.firstName, match.second, match.secondName,
+                    match.room.ranked());
             if (plugin.getConfig().getBoolean("announcements.broadcast-results", true))
                 plugin.broadcast("duel-draw", "room", match.room.name(),
                         "a", match.firstName, "b", match.secondName);
