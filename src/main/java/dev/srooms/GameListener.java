@@ -126,6 +126,17 @@ public final class GameListener implements Listener {
         event.blockList().removeIf(block -> plugin.rooms().at(block.getLocation()) != null);
     }
 
+    /**
+     * Only the two registered duelists may occupy arena space. Administrators
+     * can visit an idle room to configure spawns and regions.
+     */
+    private boolean shouldDenyEntry(Player player, Room room) {
+        if (room == null || plugin.duels().playerRoom(player) == room) return false;
+        if (plugin.duels().isOccupied(room)) return true;
+        if (player.hasPermission("srooms.admin")) return false;
+        return plugin.getConfig().getBoolean("access.protect-empty-rooms", true);
+    }
+
     @EventHandler
     public void onMove(PlayerMoveEvent event) {
         Player player = event.getPlayer();
@@ -133,6 +144,7 @@ public final class GameListener implements Listener {
         Room duringCountdown = plugin.duels().playerRoom(player);
         if (duringCountdown != null && duringCountdown.freezeCountdown()
                 && plugin.duels().isCountingDown(player)
+                && event.getFrom().getWorld().equals(event.getTo().getWorld())
                 && event.getFrom().distanceSquared(event.getTo()) > 0.00001) {
             Location frozen = event.getFrom().clone();
             frozen.setYaw(event.getTo().getYaw());
@@ -151,13 +163,14 @@ public final class GameListener implements Listener {
         }
         Room entered = plugin.rooms().at(event.getTo());
         if (entered != null && !entered.contains(event.getFrom())
-                && entered.walkIn() && !plugin.selections().isSelecting(player)) {
+                && entered.walkIn() && !plugin.selections().isSelecting(player)
+                && player.hasPermission("srooms.use")) {
             plugin.duels().join(player, entered);
             if (plugin.duels().playerRoom(player) == entered) event.setTo(player.getLocation());
             else event.setTo(event.getFrom());
             return;
         }
-        if (entered != null && plugin.duels().isOccupied(entered)) {
+        if (shouldDenyEntry(player, entered)) {
             if (entered.contains(event.getFrom())) {
                 Location exit = plugin.duels().exitLocation(entered);
                 if (exit != null) event.setTo(exit);
@@ -179,7 +192,7 @@ public final class GameListener implements Listener {
         }
         if (room == null && event.getTo() != null) {
             Room destination = plugin.rooms().at(event.getTo());
-            if (destination != null && plugin.duels().isOccupied(destination)) {
+            if (shouldDenyEntry(player, destination)) {
                 event.setCancelled(true);
                 warnIntruder(player, destination);
             }
@@ -225,10 +238,9 @@ public final class GameListener implements Listener {
     public void onJoin(PlayerJoinEvent event) {
         Player player = event.getPlayer();
         Room occupied = plugin.rooms().at(player.getLocation());
-        if (occupied != null && plugin.duels().isOccupied(occupied)
-                && plugin.duels().playerRoom(player) != occupied) {
+        if (shouldDenyEntry(player, occupied)) {
             org.bukkit.Bukkit.getScheduler().runTask(plugin, () -> {
-                if (player.isOnline() && plugin.duels().playerRoom(player) != occupied) {
+                if (player.isOnline() && shouldDenyEntry(player, occupied)) {
                     Location exit = plugin.duels().exitLocation(occupied);
                     if (exit != null) player.teleport(exit);
                     warnIntruder(player, occupied);
