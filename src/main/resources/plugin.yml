@@ -1,0 +1,33 @@
+name: SRooms
+version: '1.0.0'
+main: dev.srooms.SRoomsPlugin
+api-version: '1.20'
+author: SRooms
+commands:
+  createroom:
+    description: Seleccionar zonas de la room
+    permission: srooms.admin
+    usage: /createroom
+  nameroom:
+    description: Guardar room seleccionada
+    permission: srooms.admin
+    usage: /nameroom <nombre>
+  roomconfig:
+    description: Abrir menu de configuracion
+    permission: srooms.admin
+    usage: /roomconfig <nombre>
+  deleteroom:
+    description: Eliminar una room
+    permission: srooms.admin
+    usage: /deleteroom <nombre>
+  room:
+    description: Unirse a combates 1v1
+    permission: srooms.use
+    usage: /room <list|join|leave|info>
+permissions:
+  srooms.use:
+    default: true
+  srooms.admin:
+    default: op
+    children:
+      srooms.use: true
