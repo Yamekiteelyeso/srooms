@@ -1,0 +1,22 @@
+name: Build SRooms
+on:
+  push:
+    branches: [main]
+  pull_request:
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: maven
+      - name: Build JAR
+        run: mvn --batch-mode --no-transfer-progress clean package
+      - uses: actions/upload-artifact@v4
+        with:
+          name: SRooms-jar
+          path: target/SRooms-*.jar
+          if-no-files-found: error
