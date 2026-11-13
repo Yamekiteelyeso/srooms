@@ -91,6 +91,7 @@ public final class RoomRegistry {
                 room.healOnJoin(s.getBoolean("heal-on-join", true));
                 room.clearEffects(s.getBoolean("clear-effects", true));
                 room.countdown(s.getInt("countdown", 5));
+                room.reopenDelay(s.getInt("reopen-delay", 10));
                 Location spawnA = s.getLocation("spawn-a");
                 Location spawnB = s.getLocation("spawn-b");
                 if (spawnA != null && room.a().contains(spawnA)) room.spawnA(spawnA);
@@ -125,6 +126,7 @@ public final class RoomRegistry {
             yaml.set(base + ".heal-on-join", room.healOnJoin());
             yaml.set(base + ".clear-effects", room.clearEffects());
             yaml.set(base + ".countdown", room.countdown());
+            yaml.set(base + ".reopen-delay", room.reopenDelay());
             for (Map.Entry<String, Integer> effect : room.effects().entrySet())
                 yaml.set(base + ".effects." + effect.getKey(), effect.getValue());
         }
