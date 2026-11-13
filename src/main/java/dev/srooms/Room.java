@@ -41,6 +41,7 @@ public final class Room {
     private boolean enabled = true;
     private boolean rewardWinner = false;
     private boolean kitEnabled = false;
+    private boolean ranked = false;
     private String barrierMaterial = "GLASS";
     private final Map<String, Integer> effectLevels = new LinkedHashMap<>();
 
@@ -97,6 +98,8 @@ public final class Room {
     public void freezeCountdown(boolean value) { freezeCountdown = value; }
     public boolean enabled() { return enabled; }
     public void enabled(boolean value) { enabled = value; }
+    public boolean ranked() { return ranked; }
+    public void ranked(boolean value) { ranked = value; }
     public boolean kitEnabled() { return kitEnabled; }
     public void kitEnabled(boolean value) { kitEnabled = value; }
     public boolean rewardWinner() { return rewardWinner; }
