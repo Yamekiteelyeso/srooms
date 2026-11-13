@@ -74,6 +74,8 @@ public final class ConfigMenu implements Listener {
         toggle(menu, 27, Material.ENDER_PEARL, "Bloquear teletransporte", room.blockEnderPearls(), "Impide ender pearls y chorus fruit");
         toggle(menu, 28, Material.ICE, "Congelar inicio", room.freezeCountdown(), "Impide moverse en la cuenta atrás");
         toggle(menu, 30, Material.LEVER, "Room habilitada", room.enabled(), "Activa o desactiva nuevos combates");
+        toggle(menu, 39, Material.DIAMOND, "Recompensa al ganador", room.rewardWinner(),
+                "Ejecuta comandos configurados al ganar");
         Material barrier = Material.matchMaterial(room.barrierMaterial());
         if (barrier == null) barrier = Material.GLASS;
         menu.setItem(31, item(barrier, "&bCristal de cierre", "&7Material actual: &f" + room.barrierMaterial(),
@@ -138,6 +140,7 @@ public final class ConfigMenu implements Listener {
             case 27 -> room.blockEnderPearls(!room.blockEnderPearls());
             case 28 -> room.freezeCountdown(!room.freezeCountdown());
             case 30 -> room.enabled(!room.enabled());
+            case 39 -> room.rewardWinner(!room.rewardWinner());
             case 31 -> room.cycleBarrier();
             case 35 -> room.duelDuration(room.duelDuration() - 30);
             case 36 -> room.duelDuration(room.duelDuration() + 30);
