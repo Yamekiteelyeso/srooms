@@ -62,6 +62,7 @@ public final class RoomRegistry {
             return "El cristal supera el volumen maximo.";
         if (room.a().world() == null) return "El mundo no esta cargado.";
         for (Room other : all()) {
+            if (other == room) continue;
             if (other.overlaps(room)) return "Se solapa con la room " + other.name() + ".";
         }
         if (hasTileEntities(room)) return "El cristal contiene cofres, carteles u otros bloques con datos.";

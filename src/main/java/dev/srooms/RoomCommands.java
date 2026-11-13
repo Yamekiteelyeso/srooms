@@ -32,7 +32,7 @@ public final class RoomCommands implements CommandExecutor, TabCompleter {
         String sub = args[0].toLowerCase(Locale.ROOT);
         boolean admin = switch (sub) {
             case "createroom", "nameroom", "roomconfig", "config",
-                    "deleteroom", "reopen", "cancel", "reload", "duration" -> true;
+                    "deleteroom", "reopen", "cancel", "reload", "duration", "check", "repair" -> true;
             default -> false;
         };
         if (!sender.hasPermission(admin ? "srooms.admin" : "srooms.use")) {
@@ -41,6 +41,33 @@ public final class RoomCommands implements CommandExecutor, TabCompleter {
         }
 
         switch (sub) {
+            case "check" -> {
+                Room room = findRoom(sender, args, "usage-check");
+                if (room == null) return true;
+                String validation = plugin.rooms().validate(room);
+                if (validation == null) {
+                    org.bukkit.Location a = room.spawnA();
+                    org.bukkit.Location b = room.spawnB();
+                    if (a == null || b == null) validation = "Falta un spawn seguro (A o B).";
+                    else if (!room.a().contains(a) || room.gate().contains(a)
+                            || !room.b().contains(b) || room.gate().contains(b))
+                        validation = "Los spawns deben estar en sus zonas y fuera del cristal.";
+                }
+                if (validation == null) plugin.msg(sender, "room-check-ok", "room", room.name());
+                else plugin.msg(sender, "room-check-error", "room", room.name(),
+                        "reason", validation);
+            }
+            case "repair" -> {
+                Room room = findRoom(sender, args, "usage-repair");
+                if (room == null) return true;
+                if (plugin.duels().isOccupied(room)) {
+                    plugin.msg(sender, "room-occupied");
+                    return true;
+                }
+                boolean restored = plugin.duels().repairGate(room);
+                plugin.msg(sender, restored ? "room-repaired" : "room-no-recovery",
+                        "room", room.name());
+            }
             case "reload" -> {
                 plugin.reloadSettings();
                 plugin.msg(sender, "reloaded");
@@ -218,10 +245,10 @@ public final class RoomCommands implements CommandExecutor, TabCompleter {
             if (sender.hasPermission("srooms.use"))
                 possible.addAll(Arrays.asList("help", "list", "join", "leave", "info", "stats", "top", "gui"));
             if (sender.hasPermission("srooms.admin"))
-                possible.addAll(Arrays.asList("createroom", "nameroom", "roomconfig", "deleteroom", "reopen", "duration", "reload", "cancel"));
+                possible.addAll(Arrays.asList("createroom", "nameroom", "roomconfig", "deleteroom", "reopen", "duration", "reload", "check", "repair", "cancel"));
         } else if (args.length == 2) {
             String sub = args[0].toLowerCase(Locale.ROOT);
-            if (Arrays.asList("join", "info", "roomconfig", "config", "deleteroom", "reopen", "duration").contains(sub)) {
+            if (Arrays.asList("join", "info", "roomconfig", "config", "deleteroom", "reopen", "duration", "check", "repair").contains(sub)) {
                 if (sender.hasPermission(sub.equals("join") || sub.equals("info") ? "srooms.use" : "srooms.admin"))
                     for (Room room : plugin.rooms().all()) possible.add(room.name());
             }

@@ -171,7 +171,7 @@ public final class DuelManager {
         }
         Location spawn = match == null ? room.spawnA() : room.spawnB();
         if (spawn == null || spawn.getWorld() == null || !room.contains(spawn) || room.gate().contains(spawn)) {
-            plugin.msg(player, "selection-invalid", "reason", "Spawn invalido. Configuralo con /roomconfig.");
+            plugin.msg(player, "selection-invalid", "reason", "Spawn inválido. Configúralo con /srooms roomconfig.");
             return;
         }
         if (match == null) {
@@ -367,7 +367,8 @@ public final class DuelManager {
             reopeningTasks.remove(key);
             reopeningAt.remove(key);
             restoreGate(room);
-            plugin.broadcast("room-ready", "room", room.name());
+            if (plugin.getConfig().getBoolean("announcements.broadcast-ready", true))
+                plugin.broadcast("room-ready", "room", room.name());
         }, seconds * 20L);
         reopeningTasks.put(key, task);
     }
@@ -422,6 +423,20 @@ public final class DuelManager {
         YamlConfiguration yaml = YamlConfiguration.loadConfiguration(recoveryFile);
         restoreGateFrom(yaml, room.name());
         saveRecovery(yaml);
+    }
+
+    /**
+     * Restore the recorded original glass-area blocks after a previous crash.
+     * This never changes an active fight or its cooldown.
+     */
+    public boolean repairGate(Room room) {
+        if (isOccupied(room)) return false;
+        YamlConfiguration recovery = YamlConfiguration.loadConfiguration(recoveryFile);
+        String path = "gates." + room.name();
+        if (!recovery.isConfigurationSection(path + ".blocks")) return false;
+        restoreGateFrom(recovery, room.name());
+        if (!saveRecovery(recovery)) return false;
+        return !recovery.isConfigurationSection(path + ".blocks");
     }
 
     private void restoreGateFrom(YamlConfiguration yaml, String roomName) {
@@ -488,7 +503,7 @@ public final class DuelManager {
             match.timerBar = null;
         }
         boolean played = match.phase == Phase.FIGHT;
-        UUID winner = loser == null ? null : loser.equals(match.first) ? match.second : match.first;
+        UUID winner = DuelOutcome.winner(played, match.first, match.second, loser);
         if (loser != null && winner != null) {
             Player win = Bukkit.getPlayer(winner), lose = Bukkit.getPlayer(loser);
             String winnerName = winner.equals(match.first) ? match.firstName : match.secondName;
@@ -533,8 +548,13 @@ public final class DuelManager {
             beginReopen(match.room);
         } else if (winner == null) {
             restoreGate(match.room);
-            Player first = Bukkit.getPlayer(match.first);
-            if (first != null) plugin.msg(first, "duel-cancelled");
+            for (UUID id : new UUID[]{match.first, match.second}) {
+                if (id == null) continue;
+                Player online = Bukkit.getPlayer(id);
+                if (online != null && online.isOnline() && !online.isDead()) {
+                    plugin.msg(online, "duel-cancelled");
+                }
+            }
         } else beginReopen(match.room);
     }
 
