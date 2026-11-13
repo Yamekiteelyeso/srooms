@@ -50,14 +50,23 @@ public final class RoomRegistry {
     }
 
     public String validate(Room room) {
-        if (!room.a().worldName().equals(room.b().worldName())
-                || !room.a().worldName().equals(room.gate().worldName()))
-            return "Las tres regiones deben estar en el mismo mundo.";
-        if (room.a().overlaps(room.b()))
-            return "Las zonas A y B no pueden solaparse.";
-        if (room.a().volume() > plugin.getConfig().getLong("selection.max-zone-volume", 250000L)
-                || room.b().volume() > plugin.getConfig().getLong("selection.max-zone-volume", 250000L))
-            return "Una zona supera el volumen maximo.";
+        if (!room.legacy()) {
+            if (!room.region().worldName().equals(room.gate().worldName()))
+                return "La room y el cristal deben estar en el mismo mundo.";
+            if (!room.region().contains(room.gate()))
+                return "El cristal debe estar completamente dentro de la región de la room.";
+            if (room.region().volume() > plugin.getConfig().getLong("selection.max-zone-volume", 250000L))
+                return "La room supera el máximo de bloques permitido.";
+        } else {
+            if (!room.a().worldName().equals(room.b().worldName())
+                    || !room.a().worldName().equals(room.gate().worldName()))
+                return "Las regiones guardadas están en mundos distintos.";
+            if (room.a().overlaps(room.b()))
+                return "La room anterior contiene regiones superpuestas.";
+            if (room.a().volume() > plugin.getConfig().getLong("selection.max-zone-volume", 250000L)
+                    || room.b().volume() > plugin.getConfig().getLong("selection.max-zone-volume", 250000L))
+                return "Una región antigua supera el máximo de bloques.";
+        }
         if (room.gate().volume() > plugin.getConfig().getLong("selection.max-gate-volume", 4096L))
             return "El cristal supera el volumen maximo.";
         if (room.a().world() == null) return "El mundo no esta cargado.";
@@ -88,9 +97,15 @@ public final class RoomRegistry {
             try {
                 ConfigurationSection s = root.getConfigurationSection(key);
                 if (s == null) continue;
-                Room room = new Room(key, Cuboid.read(s.getConfigurationSection("a")),
-                        Cuboid.read(s.getConfigurationSection("b")),
-                        Cuboid.read(s.getConfigurationSection("gate")));
+                Cuboid gate = Cuboid.read(s.getConfigurationSection("gate"));
+                Room room;
+                if (s.isConfigurationSection("region")) {
+                    room = new Room(key, Cuboid.read(s.getConfigurationSection("region")), gate);
+                } else {
+                    // Read-only backwards compatibility: keep old A/B geometry exactly.
+                    room = new Room(key, Cuboid.read(s.getConfigurationSection("a")),
+                            Cuboid.read(s.getConfigurationSection("b")), gate);
+                }
                 room.keepInventory(s.getBoolean("keep-inventory", true));
                 room.keepExperience(s.getBoolean("keep-experience", true));
                 room.allowBuild(s.getBoolean("allow-build", false));
@@ -111,8 +126,8 @@ public final class RoomRegistry {
                 room.barrierMaterial(s.getString("barrier-material", plugin.getConfig().getString("duel.gate-material", "GLASS")));
                 Location spawnA = s.getLocation("spawn-a");
                 Location spawnB = s.getLocation("spawn-b");
-                if (spawnA != null && room.a().contains(spawnA)) room.spawnA(spawnA);
-                if (spawnB != null && room.b().contains(spawnB)) room.spawnB(spawnB);
+                if (room.validSpawn(spawnA)) room.spawnA(spawnA);
+                if (room.validSpawn(spawnB)) room.spawnB(spawnB);
                 ConfigurationSection effects = s.getConfigurationSection("effects");
                 if (effects != null) for (String effect : effects.getKeys(false)) {
                     int level = effects.getInt(effect);
@@ -131,8 +146,10 @@ public final class RoomRegistry {
         YamlConfiguration yaml = new YamlConfiguration();
         for (Room room : all()) {
             String base = "rooms." + room.name();
-            room.a().write(yaml, base + ".a");
-            room.b().write(yaml, base + ".b");
+            if (room.legacy()) {
+                room.a().write(yaml, base + ".a");
+                room.b().write(yaml, base + ".b");
+            } else room.region().write(yaml, base + ".region");
             room.gate().write(yaml, base + ".gate");
             yaml.set(base + ".spawn-a", room.configuredSpawnA());
             yaml.set(base + ".spawn-b", room.configuredSpawnB());
