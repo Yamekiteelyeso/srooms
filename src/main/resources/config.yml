@@ -40,6 +40,11 @@ duel:
   bossbar:
     enabled: true                  # barra con cuenta regresiva del combate
 
+ranked:
+  # Rating inicial: 1000, factor K configurable para todos los duelos ranked.
+  # Ranked debe activarse por room en /srooms roomconfig <room>.
+  k-factor: 32
+
 stats:
   enabled: true                    # victorias, derrotas, rachas, top
 
