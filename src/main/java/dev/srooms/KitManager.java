@@ -1,6 +1,8 @@
 package dev.srooms;
 
 import org.bukkit.Location;
+import org.bukkit.GameMode;
+import org.bukkit.potion.PotionEffect;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
@@ -65,6 +67,15 @@ public final class KitManager {
         yaml.set(base + ".level", player.getLevel());
         yaml.set(base + ".exp", player.getExp());
         yaml.set(base + ".total-exp", player.getTotalExperience());
+        yaml.set(base + ".game-mode", player.getGameMode().name());
+        yaml.set(base + ".allow-flight", player.getAllowFlight());
+        yaml.set(base + ".flying", player.isFlying());
+        yaml.set(base + ".health", player.getHealth());
+        yaml.set(base + ".food", player.getFoodLevel());
+        yaml.set(base + ".saturation", player.getSaturation());
+        yaml.set(base + ".exhaustion", player.getExhaustion());
+        yaml.set(base + ".fire-ticks", player.getFireTicks());
+        yaml.set(base + ".potions", new ArrayList<>(player.getActivePotionEffects()));
     }
 
     private boolean save(YamlConfiguration yaml, File file) {
@@ -143,6 +154,21 @@ public final class KitManager {
         int total = recovery.getInt(path + ".total-exp");
         float exp = (float) recovery.getDouble(path + ".exp");
         Location location = recovery.getLocation(path + ".location");
+        String modeName = recovery.getString(path + ".game-mode", "SURVIVAL");
+        GameMode gameMode;
+        try { gameMode = GameMode.valueOf(modeName); }
+        catch (IllegalArgumentException ex) { gameMode = GameMode.SURVIVAL; }
+        boolean mayFly = recovery.getBoolean(path + ".allow-flight", false);
+        boolean wasFlying = recovery.getBoolean(path + ".flying", false);
+        double health = recovery.getDouble(path + ".health", player.getHealth());
+        int food = recovery.getInt(path + ".food", 20);
+        float saturation = (float) recovery.getDouble(path + ".saturation", 5.0);
+        float exhaustion = (float) recovery.getDouble(path + ".exhaustion", 0.0);
+        int fireTicks = recovery.getInt(path + ".fire-ticks", 0);
+        List<PotionEffect> potions = new ArrayList<>();
+        for (Object effect : recovery.getList(path + ".potions", List.of())) {
+            if (effect instanceof PotionEffect potion) potions.add(potion);
+        }
 
         // Clear the journal BEFORE giving anything back. This prevents replay
         // after a crash halfway through restoration and prioritizes no dupe.
@@ -158,6 +184,19 @@ public final class KitManager {
         player.setTotalExperience(Math.max(0, total));
         player.setLevel(Math.max(0, level));
         player.setExp(Math.max(0f, Math.min(0.9999f, exp)));
+        player.setGameMode(gameMode);
+        player.setFlying(false);
+        player.setAllowFlight(mayFly);
+        if (mayFly) player.setFlying(wasFlying);
+        for (PotionEffect effect : player.getActivePotionEffects()) {
+            player.removePotionEffect(effect.getType());
+        }
+        for (PotionEffect effect : potions) player.addPotionEffect(effect);
+        player.setFoodLevel(Math.max(0, Math.min(20, food)));
+        player.setSaturation(Math.max(0, Math.min(20, saturation)));
+        player.setExhaustion(Math.max(0, Math.min(40, exhaustion)));
+        player.setFireTicks(Math.max(0, fireTicks));
+        if (!player.isDead()) player.setHealth(Math.max(1, Math.min(health, player.getMaxHealth())));
         player.updateInventory();
         if (teleport && location != null && location.getWorld() != null) player.teleport(location);
         return true;
