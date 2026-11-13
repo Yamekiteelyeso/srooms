@@ -76,6 +76,14 @@ public final class ConfigMenu implements Listener {
         toggle(menu, 30, Material.LEVER, "Room habilitada", room.enabled(), "Activa o desactiva nuevos combates");
         toggle(menu, 39, Material.DIAMOND, "Recompensa al ganador", room.rewardWinner(),
                 "Ejecuta comandos configurados al ganar");
+        menu.setItem(41, item(room.kitEnabled() ? Material.DIAMOND_CHESTPLATE : Material.IRON_CHESTPLATE,
+                "&bKit de la arena",
+                "&7Kit guardado: " + (plugin.kits().hasKit(room) ? "&aSÍ" : "&cNO"),
+                "&7Usar kit: " + (room.kitEnabled() ? "&aACTIVADO" : "&cDESACTIVADO"),
+                "&7Guardar: &f/srooms kit save " + room.name(),
+                "&eClic para alternar"));
+        toggle(menu, 44, Material.NETHERITE_SWORD, "Combate Ranked", room.ranked(),
+                "Victorias y empates modifican el ELO");
         Material barrier = Material.matchMaterial(room.barrierMaterial());
         if (barrier == null) barrier = Material.GLASS;
         menu.setItem(31, item(barrier, "&bCristal de cierre", "&7Material actual: &f" + room.barrierMaterial(),
@@ -141,6 +149,13 @@ public final class ConfigMenu implements Listener {
             case 28 -> room.freezeCountdown(!room.freezeCountdown());
             case 30 -> room.enabled(!room.enabled());
             case 39 -> room.rewardWinner(!room.rewardWinner());
+            case 44 -> room.ranked(!room.ranked());
+            case 41 -> {
+                if (!room.kitEnabled() && !plugin.kits().hasKit(room)) {
+                    plugin.msg(player, "kit-missing", "room", room.name());
+                    changed = false;
+                } else room.kitEnabled(!room.kitEnabled());
+            }
             case 31 -> room.cycleBarrier();
             case 35 -> room.duelDuration(room.duelDuration() - 30);
             case 36 -> room.duelDuration(room.duelDuration() + 30);

@@ -106,6 +106,8 @@ public final class RoomRegistry {
                 room.freezeCountdown(s.getBoolean("freeze-countdown", plugin.getConfig().getBoolean("defaults.freeze-countdown", true)));
                 room.enabled(s.getBoolean("enabled", true));
                 room.rewardWinner(s.getBoolean("reward-winner", false));
+                room.kitEnabled(s.getBoolean("kit-enabled", false));
+                room.ranked(s.getBoolean("ranked", false));
                 room.barrierMaterial(s.getString("barrier-material", plugin.getConfig().getString("duel.gate-material", "GLASS")));
                 Location spawnA = s.getLocation("spawn-a");
                 Location spawnB = s.getLocation("spawn-b");
@@ -149,6 +151,8 @@ public final class RoomRegistry {
             yaml.set(base + ".freeze-countdown", room.freezeCountdown());
             yaml.set(base + ".enabled", room.enabled());
             yaml.set(base + ".reward-winner", room.rewardWinner());
+            yaml.set(base + ".kit-enabled", room.kitEnabled());
+            yaml.set(base + ".ranked", room.ranked());
             yaml.set(base + ".barrier-material", room.barrierMaterial());
             for (Map.Entry<String, Integer> effect : room.effects().entrySet())
                 yaml.set(base + ".effects." + effect.getKey(), effect.getValue());
