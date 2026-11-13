@@ -17,6 +17,8 @@ import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.player.PlayerChangedWorldEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.event.player.PlayerCommandPreprocessEvent;
+import org.bukkit.event.player.PlayerTeleportEvent.TeleportCause;
 import org.bukkit.event.player.PlayerDropItemEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
@@ -27,6 +29,7 @@ import org.bukkit.event.entity.FoodLevelChangeEvent;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.projectiles.ProjectileSource;
+import org.bukkit.Material;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -112,10 +115,24 @@ public final class GameListener implements Listener {
                 && event.getFrom().getWorld() == event.getTo().getWorld()) return;
         Room participating = plugin.duels().playerRoom(player);
         if (participating != null) {
+            if (plugin.duels().isCountingDown(player) && participating.freezeCountdown()) {
+                Location frozen = event.getFrom().clone();
+                frozen.setYaw(event.getTo().getYaw());
+                frozen.setPitch(event.getTo().getPitch());
+                event.setTo(frozen);
+                return;
+            }
             if (!participating.contains(event.getTo())) event.setTo(event.getFrom());
             return;
         }
         Room entered = plugin.rooms().at(event.getTo());
+        if (entered != null && !entered.contains(event.getFrom())
+                && entered.walkIn() && !plugin.selections().isSelecting(player)) {
+            plugin.duels().join(player, entered);
+            if (plugin.duels().playerRoom(player) == entered) event.setTo(player.getLocation());
+            else event.setTo(event.getFrom());
+            return;
+        }
         if (entered != null && plugin.duels().isOccupied(entered)) {
             if (entered.contains(event.getFrom())) {
                 Location exit = plugin.duels().exitLocation(entered);
@@ -131,7 +148,8 @@ public final class GameListener implements Listener {
         Player player = event.getPlayer();
         if (plugin.duels().isJoining(player)) return;
         Room room = plugin.duels().playerRoom(player);
-        if (room != null && (event.getTo() == null || !room.contains(event.getTo()))) {
+        if (room != null && (event.getTo() == null || !room.contains(event.getTo())
+                || (room.blockEnderPearls() && event.getCause() == TeleportCause.ENDER_PEARL))) {
             event.setCancelled(true);
             return;
         }
@@ -141,6 +159,42 @@ public final class GameListener implements Listener {
                 event.setCancelled(true);
                 warnIntruder(player, destination);
             }
+        }
+    }
+
+    @EventHandler(ignoreCancelled = true)
+    public void onCommands(PlayerCommandPreprocessEvent event) {
+        Player player = event.getPlayer();
+        Room room = plugin.duels().playerRoom(player);
+        if (room == null || !room.blockCommands() || player.hasPermission("srooms.admin")) return;
+        String typed = event.getMessage().trim().toLowerCase(java.util.Locale.ROOT);
+        if (typed.startsWith("/")) typed = typed.substring(1);
+        String[] split = typed.split("\\s+");
+        if (split.length == 0) return;
+        String label = split[0];
+        if (label.contains(":")) label = label.substring(label.indexOf(':') + 1);
+        String sub = split.length > 1 ? split[1] : "";
+        boolean allowed = (label.equals("srooms") && sub.equals("leave"));
+        for (String entry : plugin.getConfig().getStringList("restrictions.allowed-commands")) {
+            String token = entry.toLowerCase(java.util.Locale.ROOT).trim();
+            if (token.startsWith("/")) token = token.substring(1);
+            if (token.equals(label) || token.equals(label + " " + sub)) allowed = true;
+        }
+        if (!allowed) {
+            event.setCancelled(true);
+            plugin.msg(player, "commands-locked");
+        }
+    }
+
+    @EventHandler(ignoreCancelled = true)
+    public void onPearl(PlayerInteractEvent event) {
+        if (event.getHand() != EquipmentSlot.HAND) return;
+        Room room = plugin.duels().playerRoom(event.getPlayer());
+        if (room == null || !room.blockEnderPearls()) return;
+        ItemStack used = event.getItem();
+        if (used != null && (used.getType() == Material.ENDER_PEARL || used.getType() == Material.CHORUS_FRUIT)) {
+            event.setCancelled(true);
+            plugin.msg(event.getPlayer(), "pearls-locked");
         }
     }
 
