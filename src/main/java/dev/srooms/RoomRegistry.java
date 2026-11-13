@@ -104,6 +104,7 @@ public final class RoomRegistry {
                 room.blockEnderPearls(s.getBoolean("block-ender-pearls", plugin.getConfig().getBoolean("defaults.block-ender-pearls", true)));
                 room.freezeCountdown(s.getBoolean("freeze-countdown", plugin.getConfig().getBoolean("defaults.freeze-countdown", true)));
                 room.enabled(s.getBoolean("enabled", true));
+                room.rewardWinner(s.getBoolean("reward-winner", false));
                 room.barrierMaterial(s.getString("barrier-material", plugin.getConfig().getString("duel.gate-material", "GLASS")));
                 Location spawnA = s.getLocation("spawn-a");
                 Location spawnB = s.getLocation("spawn-b");
@@ -146,6 +147,7 @@ public final class RoomRegistry {
             yaml.set(base + ".block-ender-pearls", room.blockEnderPearls());
             yaml.set(base + ".freeze-countdown", room.freezeCountdown());
             yaml.set(base + ".enabled", room.enabled());
+            yaml.set(base + ".reward-winner", room.rewardWinner());
             yaml.set(base + ".barrier-material", room.barrierMaterial());
             for (Map.Entry<String, Integer> effect : room.effects().entrySet())
                 yaml.set(base + ".effects." + effect.getKey(), effect.getValue());
