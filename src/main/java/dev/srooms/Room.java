@@ -23,7 +23,10 @@ public final class Room {
     }
 
     private final String name;
-    private final Cuboid a, b, gate;
+    // The new format stores ONE arena region plus its glass selection.
+    // Legacy rooms retain the old two regions internally without expanding
+    // their bounds or changing saved arena coordinates.
+    private final Cuboid region, legacyA, legacyB, gate;
     private Location spawnA, spawnB;
     private boolean keepInventory = true;
     private boolean keepExperience = true;
@@ -45,26 +48,71 @@ public final class Room {
     private String barrierMaterial = "GLASS";
     private final Map<String, Integer> effectLevels = new LinkedHashMap<>();
 
+    public Room(String name, Cuboid region, Cuboid gate) {
+        this.name = name;
+        this.region = region;
+        this.legacyA = null;
+        this.legacyB = null;
+        this.gate = gate;
+    }
+
+    /** For rooms.yml files saved before version 1.3.1. */
     public Room(String name, Cuboid a, Cuboid b, Cuboid gate) {
-        this.name = name; this.a = a; this.b = b; this.gate = gate;
+        this.name = name;
+        this.region = null;
+        this.legacyA = a;
+        this.legacyB = b;
+        this.gate = gate;
     }
 
     public String name() { return name; }
-    public Cuboid a() { return a; }
-    public Cuboid b() { return b; }
+    public boolean legacy() { return region == null; }
+    public Cuboid region() { return region; }
+    // Compatibility accessors for the existing duel/world routines.
+    public Cuboid a() { return legacy() ? legacyA : region; }
+    public Cuboid b() { return legacy() ? legacyB : region; }
     public Cuboid gate() { return gate; }
+
     public boolean contains(Location loc) {
-        return a.contains(loc) || b.contains(loc) || gate.contains(loc);
+        return legacy() ? legacyA.contains(loc) || legacyB.contains(loc) || gate.contains(loc)
+                : region.contains(loc);
     }
+
+    private Cuboid[] occupiedRegions() {
+        return legacy() ? new Cuboid[]{legacyA, legacyB, gate} : new Cuboid[]{region};
+    }
+
     public boolean overlaps(Room other) {
-        Cuboid[] first = {a, b, gate};
-        Cuboid[] second = {other.a, other.b, other.gate};
-        for (Cuboid x : first) for (Cuboid y : second) if (x.overlaps(y)) return true;
+        for (Cuboid x : occupiedRegions())
+            for (Cuboid y : other.occupiedRegions())
+                if (x.overlaps(y)) return true;
         return false;
     }
 
-    public Location spawnA() { return spawnA != null ? spawnA.clone() : a.findSafeSpawn(); }
-    public Location spawnB() { return spawnB != null ? spawnB.clone() : b.findSafeSpawn(); }
+    public boolean validSpawn(Location spawn) {
+        return spawn != null && spawn.getWorld() != null
+                && contains(spawn) && !gate.contains(spawn);
+    }
+
+    private Location automaticSpawn(boolean first) {
+        if (legacy()) return (first ? legacyA : legacyB).findSafeSpawn();
+        ArenaSplit.Partition partition = ArenaSplit.choose(
+                region.minX(), region.maxX(), region.minZ(), region.maxZ(),
+                gate.minX(), gate.maxX(), gate.minZ(), gate.maxZ());
+        if (!partition.valid() || region.world() == null) return null;
+        int minX = partition.alongX() ? (first ? partition.firstMin() : partition.secondMin()) : region.minX();
+        int maxX = partition.alongX() ? (first ? partition.firstMax() : partition.secondMax()) : region.maxX();
+        int minZ = partition.alongX() ? region.minZ() : (first ? partition.firstMin() : partition.secondMin());
+        int maxZ = partition.alongX() ? region.maxZ() : (first ? partition.firstMax() : partition.secondMax());
+        Cuboid side = new Cuboid(
+                new Location(region.world(), minX, region.minY(), minZ),
+                new Location(region.world(), maxX, region.maxY(), maxZ));
+        Location position = side.findSafeSpawn();
+        return validSpawn(position) ? position : null;
+    }
+
+    public Location spawnA() { return spawnA != null ? spawnA.clone() : automaticSpawn(true); }
+    public Location spawnB() { return spawnB != null ? spawnB.clone() : automaticSpawn(false); }
     public Location configuredSpawnA() { return spawnA == null ? null : spawnA.clone(); }
     public Location configuredSpawnB() { return spawnB == null ? null : spawnB.clone(); }
     public void spawnA(Location value) { spawnA = value == null ? null : value.clone(); }
