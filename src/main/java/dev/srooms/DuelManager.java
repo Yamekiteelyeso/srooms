@@ -111,6 +111,7 @@ public final class DuelManager {
             match = new Match(room, player);
             matches.put(key, match);
         }
+        Snapshot beforeTeleport = new Snapshot(player);
         if (!player.teleport(spawn)) {
             if (match.second == null && !players.containsKey(match.first)) {
                 matches.remove(key);
@@ -119,8 +120,7 @@ public final class DuelManager {
             plugin.msg(player, "selection-invalid", "reason", "No fue posible teletransportarte al spawn.");
             return;
         }
-        snapshots.put(player.getUniqueId(), new SnapshotAtJoin(player, spawn).original);
-        // SnapshotAtJoin is not used for game state; overwritten below by the capture made before teleport.
+        snapshots.put(player.getUniqueId(), beforeTeleport);
         players.put(player.getUniqueId(), match);
         applyRoomSettings(player, room);
         if (match.first.equals(player.getUniqueId())) {
@@ -347,9 +347,4 @@ public final class DuelManager {
         restoreAllRecovery();
     }
 
-    // Reserved for capture refactoring.
-    private static final class SnapshotAtJoin {
-        final Snapshot original;
-        SnapshotAtJoin(Player player, Location spawn) { original = new Snapshot(player); }
-    }
 }
