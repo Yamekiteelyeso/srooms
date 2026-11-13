@@ -19,11 +19,11 @@ import java.util.UUID;
 import java.util.regex.Pattern;
 
 public final class SelectionManager {
-    public enum Stage { A, B, GATE, NAME }
+    public enum Stage { ROOM, GATE, NAME }
     public static final class Draft {
-        private Stage stage = Stage.A;
+        private Stage stage = Stage.ROOM;
         private Location point1, point2;
-        private Cuboid a, b, gate;
+        private Cuboid room, gate;
         public Stage stage() { return stage; }
     }
 
@@ -51,7 +51,7 @@ public final class SelectionManager {
         boolean gate = stage == Stage.GATE;
         ItemStack item = new ItemStack(gate ? Material.DIAMOND_AXE : Material.GOLDEN_AXE);
         ItemMeta meta = item.getItemMeta();
-        meta.setDisplayName(SRoomsPlugin.color(gate ? "&b&lSRooms &8» &fCristal" : "&b&lSRooms &8» &fZonas"));
+        meta.setDisplayName(SRoomsPlugin.color(gate ? "&b&lSRooms &8» &fCristal" : "&b&lSRooms &8» &fRoom"));
         meta.setLore(java.util.List.of(
                 ChatColor.GRAY + "Izquierdo: punto 1",
                 ChatColor.GRAY + "Derecho: punto 2",
@@ -86,12 +86,12 @@ public final class SelectionManager {
         cancel(player, false);
         Draft draft = new Draft();
         drafts.put(player.getUniqueId(), draft);
-        if (!give(player, Stage.A)) {
+        if (!give(player, Stage.ROOM)) {
             drafts.remove(player.getUniqueId());
             plugin.msg(player, "selection-invalid", "reason", "Libera un espacio en el inventario.");
             return;
         }
-        plugin.msg(player, "selection-a");
+        plugin.msg(player, "selection-room");
     }
 
     public void cancel(Player player, boolean notify) {
@@ -124,7 +124,7 @@ public final class SelectionManager {
 
         plugin.msg(player, "selection-point",
                 "point", action == Action.LEFT_CLICK_BLOCK ? "1" : "2",
-                "stage", draft.stage.name(),
+                "stage", draft.stage == Stage.ROOM ? "ROOM" : "CRISTAL",
                 "coords", block.getX() + ", " + block.getY() + ", " + block.getZ());
         if (draft.point1 == null || draft.point2 == null) return;
         Cuboid cube;
@@ -146,19 +146,19 @@ public final class SelectionManager {
         draft.point1 = null;
         draft.point2 = null;
         switch (draft.stage) {
-            case A -> {
-                draft.a = cube;
-                draft.stage = Stage.B;
-                plugin.msg(player, "selection-b");
-            }
-            case B -> {
-                draft.b = cube;
+            case ROOM -> {
+                draft.room = cube;
                 draft.stage = Stage.GATE;
                 removeTools(player);
                 give(player, Stage.GATE);
                 plugin.msg(player, "selection-gate");
             }
             case GATE -> {
+                if (!draft.room.contains(cube)) {
+                    plugin.msg(player, "selection-invalid", "reason",
+                            "El cristal debe quedar completamente dentro de la room. Selecciona sus dos puntos otra vez.");
+                    return;
+                }
                 draft.gate = cube;
                 draft.stage = Stage.NAME;
                 removeTools(player);
@@ -182,7 +182,7 @@ public final class SelectionManager {
             plugin.msg(player, "selection-invalid", "reason", "Ese nombre ya existe.");
             return;
         }
-        Room room = new Room(name, draft.a, draft.b, draft.gate);
+        Room room = new Room(name, draft.room, draft.gate);
         String problem = plugin.rooms().validate(room);
         if (problem != null) {
             plugin.msg(player, "selection-invalid", "reason", problem);
@@ -191,6 +191,9 @@ public final class SelectionManager {
         plugin.rooms().add(room);
         drafts.remove(player.getUniqueId());
         plugin.msg(player, "room-created", "room", name);
+        if (!room.validSpawn(room.spawnA()) || !room.validSpawn(room.spawnB())) {
+            plugin.msg(player, "room-spawns-needed", "room", name);
+        }
         player.sendMessage(SRoomsPlugin.color("&7Configura esta room con &b/srooms roomconfig " + name));
     }
 }

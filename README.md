@@ -1,4 +1,4 @@
-# SRooms 1.3.0
+# SRooms 1.3.1
 
 **Paper 1.20.1 · Java 17 · Maven · Sin dependencias obligatorias**
 
@@ -25,7 +25,7 @@ Compila con **mvn clean package** o descarga el JAR desde el artifact de GitHub 
 | /srooms deleteroom <room> | Borrar room libre | srooms.admin |
 | /srooms reopen <room> <0-300> | Segundos de reapertura | srooms.admin |
 | /srooms duration <room> <30-1800> | Duración máxima del combate | srooms.admin |
-| /srooms check <room> | Validar zonas, barrera y spawns | srooms.admin |
+| /srooms check <room> | Validar la room, el cristal y los spawns | srooms.admin |
 | /srooms repair <room> | Restaurar la barrera desde la copia de recuperación (solo sala libre) | srooms.admin |
 | /srooms reload | Recargar ajustes y mensajes | srooms.admin |
 | /srooms cancel | Cancelar selección | srooms.admin |
@@ -75,12 +75,25 @@ history:
 
 ## Crear una room
 
-1. /srooms createroom — hacha: dos esquinas de zona A, luego de zona B.
-2. Segunda hacha: dos puntos de la barrera de cristal.
-3. /srooms nameroom Box1
-4. /srooms roomconfig Box1 — define spawn A/B desde cada zona si no hay suelo seguro en el centro.
+1. Ejecuta **/srooms createroom**. Recibes el hacha de selección de la room.
+2. **Clic izquierdo** en el bloque del **punto 1** de la room completa.
+3. **Clic derecho** en el bloque del **punto 2** de la misma room. No existe selección de zona A ni B.
+4. El plugin retira esa hacha y te entrega la segunda para el cristal.
+5. Con la segunda hacha, **clic izquierdo** para el punto 1 del cristal y **clic derecho** para su punto 2. El cristal debe quedar dentro de la room.
+6. Escribe **/srooms nameroom Box1** para guardar.
+7. El plugin intenta calcular dos spawns automáticos, uno a cada lado del cristal. Si no encuentra dos posiciones seguras, usa **/srooms roomconfig Box1** y establece "Spawn jugador 1" y "Spawn jugador 2" en lugares diferentes, dentro de la room y fuera del cristal.
 
-## Correcciones 1.3.0
+**Compatibilidad:** las rooms creadas con A/B en versiones antiguas conservan esas coordenadas internamente. Las rooms nuevas utilizan exclusivamente una región `region` y una región `gate` en `rooms.yml`.
+
+## Cambio de selección en 1.3.1
+
+- Dos selecciones, no tres: **room completa** y, después, **cristal**.
+- No se piden las zonas A/B; el sistema de 1v1 sigue usando dos spawns separados.
+- Las posiciones iniciales se intentan calcular automáticamente según la ubicación del cristal.
+- Se rechaza guardar un cristal seleccionado fuera de los límites de la room.
+- Los formatos de las rooms antiguas siguen siendo compatibles y no cambian de tamaño al actualizar.
+
+## Correcciones 1.3.1
 
 - Un jugador que abandona en la cuenta regresiva cancela la pelea. Ya no se anuncia un ganador falso, ni se dan recompensas o estadísticas antes de comenzar.
 - La entrada a regiones vacías queda protegida: usuarios que no estén inscritos no pueden pasearse por una room (configurable con access.protect-empty-rooms). Los administradores pueden entrar a rooms libres.
@@ -117,7 +130,7 @@ Las arenas previas se cargan sin borrarse. Los archivos globales se amplían con
 
 Comprueba creación, selección, reapertura, duelos con dos y tres jugadores, entrada automática, empate por timeout, BossBar, stats, protección de construcción, restitución de jugador, premios opt-in y persistencia después del reinicio.
 
-**Build y pruebas:** mvn clean verify => target/SRooms-1.3.0.jar.
+**Build y pruebas:** mvn clean verify => target/SRooms-1.3.1.jar.
 
 **Nota:** la compilación por CI valida que el proyecto genere el JAR; antes de producción comprueba los flujos en un servidor de prueba Paper 1.20.1.
 
