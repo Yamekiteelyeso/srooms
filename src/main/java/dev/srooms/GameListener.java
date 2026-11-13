@@ -89,15 +89,36 @@ public final class GameListener implements Listener {
 
     @EventHandler(ignoreCancelled = true)
     public void onBreak(BlockBreakEvent event) {
-        if (plugin.selections().isTool(event.getPlayer().getInventory().getItemInMainHand())
-                || !canEdit(event.getPlayer(), event.getBlock().getLocation())) {
+        Player player = event.getPlayer();
+        if (plugin.selections().isTool(player.getInventory().getItemInMainHand())
+                || !canEdit(player, event.getBlock().getLocation())) {
             event.setCancelled(true);
+            return;
+        }
+        if (plugin.duels().playerRoom(player) != null) {
+            if (!plugin.duels().recordWorldEdit(player, event.getBlock(), event.getBlock().getBlockData())) {
+                event.setCancelled(true);
+                plugin.msg(player, "build-limit");
+                return;
+            }
+            event.setDropItems(false);
+            event.setExpToDrop(0);
         }
     }
 
     @EventHandler(ignoreCancelled = true)
     public void onPlace(BlockPlaceEvent event) {
-        if (!canEdit(event.getPlayer(), event.getBlockPlaced().getLocation())) event.setCancelled(true);
+        Player player = event.getPlayer();
+        if (!canEdit(player, event.getBlockPlaced().getLocation())) {
+            event.setCancelled(true);
+            return;
+        }
+        if (plugin.duels().playerRoom(player) != null
+                && !plugin.duels().recordWorldEdit(player, event.getBlockPlaced(),
+                        event.getBlockReplacedState().getBlockData())) {
+            event.setCancelled(true);
+            plugin.msg(player, "build-limit");
+        }
     }
 
     @EventHandler(ignoreCancelled = true)
