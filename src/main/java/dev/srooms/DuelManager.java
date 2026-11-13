@@ -266,8 +266,8 @@ public final class DuelManager {
         snapshots.put(player.getUniqueId(), beforeTeleport);
         players.put(player.getUniqueId(), match);
         player.setGameMode(GameMode.SURVIVAL);
-        player.setAllowFlight(false);
         player.setFlying(false);
+        player.setAllowFlight(false);
         plugin.playSound(player, "join");
         applyRoomSettings(player, room);
         ejectIntruders(room);
@@ -683,6 +683,7 @@ public final class DuelManager {
     private void restorePlayer(Player player, Snapshot snapshot, boolean teleport) {
         if (teleport) player.teleport(snapshot.location);
         player.setGameMode(snapshot.gameMode);
+        player.setFlying(false);
         player.setAllowFlight(snapshot.allowFlight);
         if (snapshot.allowFlight) player.setFlying(snapshot.flying);
         for (PotionEffect effect : player.getActivePotionEffects()) player.removePotionEffect(effect.getType());
@@ -698,7 +699,12 @@ public final class DuelManager {
         for (BukkitTask task : reopeningTasks.values()) task.cancel();
         reopeningTasks.clear();
         reopeningAt.clear();
-        for (Match match : new ArrayList<>(matches.values())) finish(match, null, false);
+        for (Match match : new ArrayList<>(matches.values())) {
+            // Server shutdown is never a draw or a ranked result and must not
+            // schedule a cooldown task while the plugin is being disabled.
+            match.phase = Phase.WAITING;
+            finish(match, null, false);
+        }
         restoreAllRecovery();
     }
 
