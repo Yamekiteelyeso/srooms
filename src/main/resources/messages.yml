@@ -1,4 +1,4 @@
-# SRooms 1.3.1 | Personaliza todos los mensajes de chat.
+# SRooms 1.3.2 | Personaliza todos los mensajes de chat.
 # Colores Minecraft: &0 - &f, &l (negrita), &r (reiniciar).
 # Variables disponibles según mensaje: %room%, %winner%, %loser%, %seconds%, %players%, %status%, %keep%, %point%, %stage%, %coords%, %reason%.
 prefix: '&8[&b&lSRooms&8] &7'
@@ -33,9 +33,9 @@ usage-info: '&cUso: &f/srooms info <nombre>'
 room-created: '&aRoom &f%room% &acreada correctamente. &7Configúrala con &f/srooms roomconfig %room%&7.'
 room-deleted: '&aLa room &f%room% &ase eliminó correctamente.'
 reopen-configured: '&aReapertura de &f%room%&a: &f%seconds% segundos&a.'
-selection-room: '&fPaso &b1/2 &8• &7Selecciona la &froom completa&7: &fclic izquierdo = punto 1&7, &fclic derecho = punto 2&7.'
-selection-gate: '&fPaso &b2/2 &8• &7Ahora selecciona la zona del &fcristal&7 con la segunda hacha. &fIzquierdo = punto 1&7, &fderecho = punto 2&7.'
-selection-name: '&a¡Selección terminada! &7Guarda la room usando &f/srooms nameroom <nombre>&7.'
+selection-room: '&fPaso &b1/2 &8• &7Marca la room con la hacha de oro: &fizquierdo = punto 1&7, luego &fderecho = punto 2&7.'
+selection-gate: '&fPaso &b2/2 &8• &7Ahora marca el cristal con la hacha de diamante: &fizquierdo = punto 1&7, luego &fderecho = punto 2&7.'
+selection-name: '&a¡Room y cristal seleccionados! &7La room aún NO se ha creado. Guarda usando &f/srooms nameroom <nombre>&7.'
 selection-point: '&7Punto &f%point% &7de &f%stage% &8→ &b%coords%'
 selection-incomplete: '&cFalta terminar la región de la room o el cristal. &7Usa &f/srooms createroom&7.'
 selection-invalid: '&c%reason%'
@@ -46,8 +46,8 @@ rooms-empty: '&eTodavía no existen rooms. &7Un admin puede crearlas con &f/sroo
 rooms-title: '&b&lRooms &8» &7Estado de las arenas'
 rooms-entry: '&8• &f%room% &8| &b%players%/2 &8| &7%status%'
 room-info: '&b%room% &8» &7%players%/2 &8| &7%status% &8| &7Keep: &f%keep% &8| &7Reabre: &f%seconds%s &8| &7Límite: &f%duration%s &8| &7Ranked: &f%ranked% &8| &7Kit: &f%kit%'
-joined-wait: '&aEntraste en &f%room%&a. &7Esperando a tu rival (&f1/2&7)...'
-joined-start: '&a¡Rival encontrado! &7Prepárate: el cristal se abrirá en unos segundos.'
+joined-wait: '&7Estado: &eEsperando un rival... &8(&f%players%/%max%&8)'
+joined-start: '&aRival encontrado: &f%opponent%&a. &7El combate comenzará en breve.'
 duel-start: '&b&l¡A PELEAR! &7Que gane el mejor.'
 duel-win: '&a¡Victoria! &7Derrotaste a &f%loser%&7.'
 duel-lose: '&cDerrota. &7Ganó &f%winner%&7. ¡A por la próxima!'
@@ -119,3 +119,22 @@ history-draw: '&8• &7%time% &8| &b%room% &8| &eEmpate &8(&f%a% &7vs &f%b%&8)'
 
 # 1.3.1 - Una región para toda la room
 room-spawns-needed: '&eRoom &f%room% &eguardada. &7No se encontraron dos spawns seguros; configura Spawn jugador 1 y 2 desde &f/srooms roomconfig %room%&7.'
+
+# SRooms 1.3.2 — Feedback de selección y entrada a las arenas
+selection-need-first: '&ePrimero marca el punto 1 con clic izquierdo. &7Después usa clic derecho para el punto 2.'
+selection-different-block: '&cEl punto 2 debe ser otro bloque distinto al punto 1.'
+selection-click-too-fast: '&eHaz dos clics separados: primero izquierdo y después derecho.'
+selection-next-corner: '&7Punto 1 guardado. &aAhora clic derecho &7en otro bloque para el punto 2.'
+selection-room-title: '&b&lCREAR ROOM'
+selection-room-subtitle: '&7Selecciona dos esquinas con la hacha de oro'
+selection-gate-title: '&b&lSELECCIONAR CRISTAL'
+selection-gate-subtitle: '&7Marca dos esquinas con la nueva hacha'
+selection-done-title: '&a&lZONAS COMPLETAS'
+selection-done-subtitle: '&7Usa /srooms nameroom <nombre> para guardar'
+joined-room: '&aEntraste en la room &f%room% &8(&b%players%/%max% &7jugadores&8)'
+opponent-joined: '&a¡%opponent% entró en &f%room%&a! &7Jugadores: &f%players%/%max%&7.'
+join-title: '&a&l¡ENTRASTE!'
+join-subtitle: '&fRoom &b%room% &8• &e%players%/%max% jugadores'
+opponent-title: '&6&l¡RIVAL ENCONTRADO!'
+opponent-subtitle: '&f%opponent% &8• &e2/2 jugadores'
+room-spawns-invalid: '&cLa room &f%room% &cno tiene dos spawns válidos y separados. &7Configúralos en &f/srooms roomconfig %room%&7.'

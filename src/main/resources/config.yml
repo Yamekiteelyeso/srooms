@@ -1,5 +1,5 @@
 # ================================================================
-# SRooms 1.3.1 | Paper 1.20.1 | Java 17
+# SRooms 1.3.2 | Paper 1.20.1 | Java 17
 # Todas las arenas son 1v1. Los ajustes de cada arena se guardan
 # en rooms.yml y pueden modificarse desde /srooms roomconfig <room>.
 # ================================================================
@@ -19,6 +19,10 @@ access:
   # exit-spawn: (se guarda automáticamente al ejecutar /srooms setexit)
 
 selection:
+  # Evita que un solo gesto o eventos duplicados cuenten como dos clics.
+  # 0 = desactivar cada espera; rangos permitidos 0..1000 / 0..2000 ms.
+  min-click-interval-ms: 80
+  stage-cooldown-ms: 160
   # Protege contra selecciones enormes que puedan generar lag.
   max-zone-volume: 250000
   max-gate-volume: 4096
@@ -33,6 +37,8 @@ defaults:
   duel-duration-seconds: 300       # 30..1800 (5 minutos por defecto)
 
 duel:
+  # Da 2 segundos para leer "Rival encontrado" antes del countdown.
+  countdown-preparation-ticks: 40
   # 0 = sin límite de espera. Una room libre con un solo jugador
   # se cancela automáticamente si no llega rival en este intervalo.
   waiting-timeout-seconds: 120
@@ -94,3 +100,8 @@ kits:
 history:
   # Últimas partidas (victorias y empates) que conserva history.yml.
   max-entries: 200
+
+# Mensajes grandes de bienvenida al entrar a una room.
+ui:
+  join-titles:
+    enabled: true

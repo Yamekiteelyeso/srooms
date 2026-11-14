@@ -24,6 +24,8 @@ public final class SelectionManager {
         private Stage stage = Stage.ROOM;
         private Location point1, point2;
         private Cuboid room, gate;
+        private final SelectionClicks clicks;
+        Draft(SelectionClicks clicks) { this.clicks = clicks; }
         public Stage stage() { return stage; }
     }
 
@@ -84,7 +86,9 @@ public final class SelectionManager {
             return;
         }
         cancel(player, false);
-        Draft draft = new Draft();
+        Draft draft = new Draft(new SelectionClicks(
+                plugin.getConfig().getInt("selection.min-click-interval-ms", 80),
+                plugin.getConfig().getInt("selection.stage-cooldown-ms", 160)));
         drafts.put(player.getUniqueId(), draft);
         if (!give(player, Stage.ROOM)) {
             drafts.remove(player.getUniqueId());
@@ -92,6 +96,8 @@ public final class SelectionManager {
             return;
         }
         plugin.msg(player, "selection-room");
+        player.sendTitle(plugin.raw("selection-room-title"),
+                plugin.raw("selection-room-subtitle"), 5, 45, 10);
     }
 
     public void cancel(Player player, boolean notify) {
@@ -118,13 +124,39 @@ public final class SelectionManager {
             plugin.msg(player, "selection-invalid", "reason", "Usa el hacha de selección correspondiente.");
             return;
         }
-        if (action == Action.LEFT_CLICK_BLOCK) draft.point1 = block.getLocation();
-        else if (action == Action.RIGHT_CLICK_BLOCK) draft.point2 = block.getLocation();
-        else return;
-
+        if (action != Action.LEFT_CLICK_BLOCK && action != Action.RIGHT_CLICK_BLOCK) return;
+        SelectionClicks.Result result = draft.clicks.click(
+                action == Action.LEFT_CLICK_BLOCK,
+                new SelectionClicks.Point(block.getWorld().getName(),
+                        block.getX(), block.getY(), block.getZ()),
+                System.nanoTime());
+        switch (result) {
+            case STAGE_COOLDOWN -> { return; } // Ignore duplicated interactions after a tool change.
+            case NEED_FIRST -> {
+                plugin.msg(player, "selection-need-first");
+                return;
+            }
+            case SAME_BLOCK -> {
+                plugin.msg(player, "selection-different-block");
+                return;
+            }
+            case TOO_FAST -> {
+                plugin.msg(player, "selection-click-too-fast");
+                return;
+            }
+            case FIRST_POINT -> {
+                draft.point1 = block.getLocation();
+                draft.point2 = null;
+                plugin.msg(player, "selection-point",
+                        "point", "1", "stage", draft.stage == Stage.ROOM ? "ROOM" : "CRISTAL",
+                        "coords", block.getX() + ", " + block.getY() + ", " + block.getZ());
+                plugin.msg(player, "selection-next-corner");
+                return;
+            }
+            case SECOND_POINT -> draft.point2 = block.getLocation();
+        }
         plugin.msg(player, "selection-point",
-                "point", action == Action.LEFT_CLICK_BLOCK ? "1" : "2",
-                "stage", draft.stage == Stage.ROOM ? "ROOM" : "CRISTAL",
+                "point", "2", "stage", draft.stage == Stage.ROOM ? "ROOM" : "CRISTAL",
                 "coords", block.getX() + ", " + block.getY() + ", " + block.getZ());
         if (draft.point1 == null || draft.point2 == null) return;
         Cuboid cube;
@@ -132,7 +164,9 @@ public final class SelectionManager {
             cube = new Cuboid(draft.point1, draft.point2);
         } catch (IllegalArgumentException ex) {
             plugin.msg(player, "selection-invalid", "reason", ex.getMessage());
+            draft.point1 = null;
             draft.point2 = null;
+            draft.clicks.nextStage(System.nanoTime());
             return;
         }
         long max = draft.stage == Stage.GATE
@@ -140,18 +174,28 @@ public final class SelectionManager {
                 : plugin.getConfig().getLong("selection.max-zone-volume", 250000);
         if (cube.volume() > max) {
             plugin.msg(player, "selection-invalid", "reason", "La region es demasiado grande (max: " + max + " bloques).");
+            draft.point1 = null;
             draft.point2 = null;
+            draft.clicks.nextStage(System.nanoTime());
             return;
         }
         draft.point1 = null;
         draft.point2 = null;
+        draft.clicks.nextStage(System.nanoTime());
         switch (draft.stage) {
             case ROOM -> {
                 draft.room = cube;
                 draft.stage = Stage.GATE;
                 removeTools(player);
-                give(player, Stage.GATE);
+                if (!give(player, Stage.GATE)) {
+                    drafts.remove(player.getUniqueId());
+                    plugin.msg(player, "selection-invalid", "reason",
+                            "No hay espacio para el hacha del cristal. Reinicia con /srooms createroom.");
+                    return;
+                }
                 plugin.msg(player, "selection-gate");
+                player.sendTitle(plugin.raw("selection-gate-title"),
+                        plugin.raw("selection-gate-subtitle"), 5, 50, 10);
             }
             case GATE -> {
                 if (!draft.room.contains(cube)) {
@@ -163,6 +207,8 @@ public final class SelectionManager {
                 draft.stage = Stage.NAME;
                 removeTools(player);
                 plugin.msg(player, "selection-name");
+                player.sendTitle(plugin.raw("selection-done-title"),
+                        plugin.raw("selection-done-subtitle"), 5, 50, 10);
             }
             default -> { }
         }

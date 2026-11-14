@@ -1,4 +1,4 @@
-# SRooms 1.3.1
+# SRooms 1.3.2
 
 **Paper 1.20.1 · Java 17 · Maven · Sin dependencias obligatorias**
 
@@ -73,6 +73,27 @@ history:
 
 **Seguridad:** no prometemos restauración perfecta ante cualquier fallo físico del disco, mods que reemplacen inventarios ni plugins que modifiquen eventos a posteriori. Prueba los kits y la interacción con otros plugins en un servidor de ensayo antes de activarlos para todos.
 
+## Correcciones 1.3.2: selección del cristal y mensajes 1v1
+
+- La room sigue usando **una única región**, seleccionada con dos esquinas (hacha de oro) y luego la zona del cristal (hacha de diamante).
+- Cada selección requiere **dos clics distintos y en orden**: primero clic izquierdo en el punto 1, después clic derecho en **otro bloque** para el punto 2. Un único clic nunca termina el cristal.
+- Se ignoran los eventos de clic duplicados demasiado rápidos y los clics generados justo durante el cambio automático de herramienta. La selección no se guarda hasta ejecutar `/srooms nameroom <nombre>`.
+- Al unirse, cada jugador ve en chat y en título `¡ENTRASTE! Room <nombre> • 1/2` o `2/2`. Cuando llega un rival, el primero también ve `¡RIVAL ENCONTRADO!`.
+- El contador de inicio deja una breve pausa configurable para leer los mensajes antes del countdown.
+- Una arena con los dos spawns inválidos o superpuestos rechaza el intento de unión, en vez de dejar a un jugador esperando en un 1v1 imposible.
+- Mensajes, títulos y protección contra clics duplicados configurables en `messages.yml` y `config.yml`.
+
+```yaml
+selection:
+  min-click-interval-ms: 80
+  stage-cooldown-ms: 160
+duel:
+  countdown-preparation-ticks: 40
+ui:
+  join-titles:
+    enabled: true
+```
+
 ## Crear una room
 
 1. Ejecuta **/srooms createroom**. Recibes el hacha de selección de la room.
@@ -130,7 +151,7 @@ Las arenas previas se cargan sin borrarse. Los archivos globales se amplían con
 
 Comprueba creación, selección, reapertura, duelos con dos y tres jugadores, entrada automática, empate por timeout, BossBar, stats, protección de construcción, restitución de jugador, premios opt-in y persistencia después del reinicio.
 
-**Build y pruebas:** mvn clean verify => target/SRooms-1.3.1.jar.
+**Build y pruebas:** mvn clean verify => target/SRooms-1.3.2.jar.
 
 **Nota:** la compilación por CI valida que el proyecto genere el JAR; antes de producción comprueba los flujos en un servidor de prueba Paper 1.20.1.
 
