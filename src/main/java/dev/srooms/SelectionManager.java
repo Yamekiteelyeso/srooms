@@ -246,7 +246,8 @@ public final class SelectionManager {
         plugin.rooms().add(room);
         drafts.remove(player.getUniqueId());
         plugin.msg(player, "room-created", "room", name);
-        if (!room.validSpawn(room.spawnA()) || !room.validSpawn(room.spawnB())) {
+        if (room.teleportOnJoin()
+                && (!room.validSpawn(room.spawnA()) || !room.validSpawn(room.spawnB()))) {
             plugin.msg(player, "room-spawns-needed", "room", name);
         }
         player.sendMessage(SRoomsPlugin.color("&7Configura esta room con &b/srooms roomconfig " + name));
