@@ -234,10 +234,6 @@ public final class DuelManager {
             plugin.msg(player, "kit-recovery-pending");
             return;
         }
-        if (room.kitEnabled() && !plugin.kits().hasKit(room)) {
-            plugin.msg(player, "kit-missing", "room", room.name());
-            return;
-        }
         String key = roomKey(room);
         if (reopeningAt.containsKey(key)) {
             plugin.msg(player, "room-reopening", "room", room.name(),
@@ -304,22 +300,6 @@ public final class DuelManager {
                 plugin.msg(player, "selection-invalid", "reason", "No fue posible teletransportarte al spawn.");
                 return;
             }
-        }
-        boolean kitApplied;
-        try {
-            kitApplied = plugin.kits().apply(player, room, beforeTeleport.location);
-        } catch (RuntimeException ex) {
-            plugin.getLogger().severe("Error aplicando kit de " + room.name() + ": " + ex.getMessage());
-            plugin.kits().restore(player, false);
-            kitApplied = false;
-        }
-        if (!kitApplied) {
-            if (spawn != null) player.teleport(beforeTeleport.location);
-            if (match.first.equals(player.getUniqueId()) && !players.containsKey(match.first)) {
-                matches.remove(key);
-            }
-            plugin.msg(player, "kit-apply-failed");
-            return;
         }
         snapshots.put(player.getUniqueId(), beforeTeleport);
         players.put(player.getUniqueId(), match);
@@ -724,13 +704,13 @@ public final class DuelManager {
         if (match == null) return;
         Room room = match.room;
         event.setDeathMessage(null);
-        boolean keep = room.keepInventory() || room.kitEnabled();
+        boolean keep = room.keepInventory();
         event.setKeepInventory(keep);
         if (keep) {
             event.getDrops().clear();
         }
-        event.setKeepLevel(room.keepExperience() || room.kitEnabled());
-        if (room.keepExperience() || room.kitEnabled()) {
+        event.setKeepLevel(room.keepExperience());
+        if (room.keepExperience()) {
             event.setDroppedExp(0);
         }
         finish(match, dead.getUniqueId(), true);
@@ -759,7 +739,7 @@ public final class DuelManager {
             String winnerName = winner.equals(match.first) ? match.firstName : match.secondName;
             String loserName = loser.equals(match.first) ? match.firstName : match.secondName;
             if (played) {
-                plugin.stats().result(winner, winnerName, loser, loserName, match.room.ranked());
+                plugin.stats().result(winner, winnerName, loser, loserName, false);
                 rewardWinner(match.room, winnerName, loserName);
             }
             if (plugin.getConfig().getBoolean("announcements.broadcast-results", true))
@@ -801,7 +781,7 @@ public final class DuelManager {
         clearProjectiles(match);
         if (winner == null && played) {
             plugin.stats().draw(match.first, match.firstName, match.second, match.secondName,
-                    match.room.ranked());
+                    false);
             if (plugin.getConfig().getBoolean("announcements.broadcast-results", true))
                 plugin.broadcast("duel-draw", "room", match.room.name(),
                         "a", match.firstName, "b", match.secondName);
