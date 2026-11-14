@@ -34,10 +34,11 @@ public final class Room {
     private boolean lockHunger = false;
     private boolean healOnJoin = false;
     private boolean clearEffects = false;
-    private int countdown = 5;
+    private int countdown = 0;
     private int reopenDelay = 0;
     private int duelDuration = 300;
     private boolean walkIn = true;
+    private boolean teleportOnJoin = false;
     private boolean blockCommands = false;
     private boolean blockEnderPearls = false;
     private boolean freezeCountdown = false;
@@ -131,11 +132,13 @@ public final class Room {
     public boolean clearEffects() { return clearEffects; }
     public void clearEffects(boolean value) { clearEffects = value; }
     public int countdown() { return countdown; }
-    public void countdown(int seconds) { countdown = Math.max(1, Math.min(30, seconds)); }
+    public void countdown(int seconds) { countdown = Math.max(0, Math.min(30, seconds)); }
     public int reopenDelay() { return reopenDelay; }
     public void reopenDelay(int seconds) { reopenDelay = Math.max(0, Math.min(300, seconds)); }
     public int duelDuration() { return duelDuration; }
     public void duelDuration(int value) { duelDuration = Math.max(30, Math.min(1800, value)); }
+    public boolean teleportOnJoin() { return teleportOnJoin; }
+    public void teleportOnJoin(boolean value) { teleportOnJoin = value; }
     public boolean walkIn() { return walkIn; }
     public void walkIn(boolean value) { walkIn = value; }
     public boolean blockCommands() { return blockCommands; }
