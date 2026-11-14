@@ -1,4 +1,4 @@
-# SRooms 1.3.4 | Personaliza todos los mensajes de chat.
+# SRooms 1.3.5 | Personaliza todos los mensajes de chat.
 # Colores Minecraft: &0 - &f, &l (negrita), &r (reiniciar).
 # Variables disponibles según mensaje: %room%, %winner%, %loser%, %seconds%, %players%, %status%, %keep%, %point%, %stage%, %coords%, %reason%.
 prefix: '&8[&b&lSRooms&8] &7'
@@ -19,9 +19,9 @@ gate-unsafe: '&cEl cristal seleccionado contiene bloques con datos. Cámbialo.'
 
 # Ayuda
 help-title: '&b&lSRooms &8» &fCentro de comandos &7(1v1)'
-help-player: '&aPara entrar a una room simplemente camina dentro de ella. &7/srooms gui &8• &fmenú &8| &7/srooms leave &8• &fsalir &8| &7/srooms stats &8• &fstats &8| &7/srooms top elo &8• &franking'
+help-player: '&aEntra a cualquier room caminando dentro de ella. &7/srooms gui &8• &frooms &8| &7/srooms stats &8• &fstats &8| &7/srooms top &8• &ftop'
 help-admin: '&7/srooms createroom &8• &fcrear &8| &7/srooms nameroom <nombre> &8• &fguardar &8| &7/srooms roomconfig <room> &8• &fconfigurar'
-help-admin-two: '&7/srooms kit save <room> &8• &fguardar kit &8| &7/srooms setexit &8• &fsalida &8| &7/srooms reset <room> &8• &freiniciar &8| &7/srooms check <room> &8• &fcomprobar &8| &7/srooms reload &8• &frecargar'
+help-admin-two: '&7/srooms setexit &8• &fsalida &8| &7/srooms reset <room> &8• &freiniciar &8| &7/srooms check <room> &8• &fcomprobar &8| &7/srooms reload &8• &frecargar'
 usage-name: '&cUso: &f/srooms nameroom <nombre>'
 usage-config: '&cUso: &f/srooms roomconfig <nombre>'
 usage-delete: '&cUso: &f/srooms deleteroom <nombre>'
@@ -45,7 +45,7 @@ selection-ended: '&7La selección fue cancelada.'
 rooms-empty: '&eTodavía no existen rooms. &7Un admin puede crearlas con &f/srooms createroom&7.'
 rooms-title: '&b&lRooms &8» &7Estado de las arenas'
 rooms-entry: '&8• &f%room% &8| &b%players%/2 &8| &7%status%'
-room-info: '&b%room% &8» &7%players%/2 &8| &7%status% &8| &7Keep: &f%keep% &8| &7Reabre: &f%seconds%s &8| &7Límite: &f%duration%s &8| &7Ranked: &f%ranked% &8| &7Kit: &f%kit%'
+room-info: '&b%room% &8» &7%players%/2 &8| &7%status% &8| &7Keep: &f%keep% &8| &7Reabre: &f%seconds%s &8| &7Límite: &f%duration%s'
 joined-wait: '&7Estado: &eEsperando un rival... &8(&f%players%/%max%&8)'
 joined-start: '&a¡Rival encontrado: &f%opponent%&a! &7El combate comienza ahora (2/2).'
 duel-start: '&b&l¡A PELEAR! &7Que gane el mejor.'
@@ -73,7 +73,7 @@ duration-configured: '&aEl límite del duelo en &f%room% &aes ahora &f%seconds% 
 usage-stats: '&cUso: &f/srooms stats <jugador>'
 stats-empty: '&7Aún no hay estadísticas registradas.'
 stats-title: '&b&lEstadísticas de &f%player%'
-stats-line: '&aVictorias: &f%wins% &8| &cDerrotas: &f%losses% &8| &eEmpates: &f%draws% &8| &6ELO: &f%elo% &8| &eRacha: &f%streak% &8| &7Mejor: &f%best% &8| &bWinrate: &f%rate%%'
+stats-line: '&aVictorias: &f%wins% &8| &cDerrotas: &f%losses% &8| &eEmpates: &f%draws% &8| &eRacha: &f%streak% &8| &7Mejor: &f%best% &8| &bWinrate: &f%rate%%'
 top-title: '&b&lTop 10 &8» &7Jugadores con más victorias'
 top-entry: '&e#%rank% &f%player% &8• &a%wins% victorias &8• &7Racha: &f%streak%'
 duel-draw: '&e¡EMPATE! &7%a% y %b% agotaron el tiempo en &b%room%&7.'
@@ -85,22 +85,14 @@ build-limit: '&cNo puedes modificar ese bloque. &7Límite de cambios alcanzado o
 # 1.2.1 - Diagnostico y recuperacion
 usage-check: '&cUso: &f/srooms check <nombre>'
 usage-repair: '&cUso: &f/srooms repair <nombre>'
-room-check-ok: '&aLa room &f%room% &apasó las comprobaciones: región y cristal (spawns solo si hay TP).'
+room-check-ok: '&aLa room &f%room% &aestá correctamente configurada para jugar 1v1.'
 room-check-error: '&cRoom &f%room%&c: &7%reason%'
 room-repaired: '&aSe restauraron los bloques originales de la barrera de &f%room%&a.'
 room-no-recovery: '&eNo hay ninguna barrera pendiente de recuperación en &f%room%&e.'
 
 # 1.3.0 - Kits, espera, seguridad y administración
-usage-kit: '&cUso: &f/srooms kit <save|clear|info> <room>'
-kit-saved: '&aKit de &f%room% &aguardado. &7Actívalo en /srooms roomconfig.'
-kit-cleared: '&aKit de &f%room% &aeliminado y desactivado.'
-kit-info: '&bKit %room% &8» &7Guardado: &f%saved% &8| &7Activo: &f%enabled%'
-kit-missing: '&cLa room &f%room% &cno tiene un kit guardado. Usa &f/srooms kit save %room%&c.'
-kit-save-failed: '&cNo fue posible guardar el kit. Revisa la consola y permisos del disco.'
-kit-apply-failed: '&cNo se pudo iniciar el combate con kit. No se modificó tu inventario.'
 kit-recovered: '&aSe recuperó tu inventario original tras la partida anterior.'
 kit-recovery-pending: '&cTienes un inventario pendiente de recuperar. Contacta con un administrador si persiste.'
-kit-containers-blocked: '&cNo puedes transferir objetos del kit a contenedores.'
 waiting-expired: '&eNo llegó ningún rival a tiempo. Se canceló la espera en &f%room%&e.'
 exit-saved: '&aSe estableció tu posición como salida segura de las arenas.'
 exit-inside-room: '&cLa salida debe estar fuera de cualquier room.'
@@ -109,8 +101,6 @@ room-reset: '&aRoom &f%room% &areiniciada. Jugadores devueltos a su posición an
 room-already-idle: '&eLa room &f%room% &eya está libre y no necesita reinicio.'
 
 # 1.3.0 - Rating y resultados persistentes
-top-elo-title: '&6&lTOP ELO &8» &7Clasificación de las arenas Ranked'
-top-elo-entry: '&e#%rank% &f%player% &8• &6%elo% ELO &8• &a%wins% victorias'
 history-title: '&b&lHistorial &8» &7Últimos 1v1 terminados'
 history-empty: '&7Todavía no existen combates registrados.'
 usage-history: '&cUso: &f/srooms history [room]'
@@ -118,7 +108,6 @@ history-win: '&8• &7%time% &8| &b%room% &8| &a%winner% &7ganó &8(&f%a% &7vs &
 history-draw: '&8• &7%time% &8| &b%room% &8| &eEmpate &8(&f%a% &7vs &f%b%&8)'
 
 # 1.3.1 - Una región para toda la room
-room-spawns-needed: '&eRoom &f%room% &eguardada. &7No se encontraron dos spawns seguros; configura Spawn jugador 1 y 2 desde &f/srooms roomconfig %room%&7.'
 
 # SRooms 1.3.2 — Feedback de selección y entrada a las arenas
 selection-need-first: '&ePrimero marca el punto 1 con clic izquierdo. &7Después usa clic derecho para el punto 2.'
@@ -137,10 +126,12 @@ join-title: '&a&l¡ENTRASTE!'
 join-subtitle: '&fRoom &b%room% &8• &e%players%/%max% jugadores'
 opponent-title: '&6&l¡RIVAL ENCONTRADO!'
 opponent-subtitle: '&f%opponent% &8• &e2/2 jugadores'
-room-spawns-invalid: '&cLa room &f%room% &cno tiene dos spawns válidos y separados. &7Configúralos en &f/srooms roomconfig %room%&7.'
+room-spawns-invalid: '&cLa room &f%room% &cno encontró posiciones seguras para el TP automático. &7Desactiva Teletransporte al entrar desde &f/srooms roomconfig %room%&7.'
 
 # 1.3.4 — PvP instantáneo, TP opcional, cristal al llegar los dos
-room-walk-in: '&ePara entrar a &f%room% &esolo camina dentro de la arena. &7No hace falta un comando.'
 room-reenter: '&eSal de &f%room% &ey vuelve a entrar caminando para participar en otro combate.'
 duel-start-title: '&c&l¡PELEA!'
 room-clearing: '&eLa room &f%room% &eestá terminando la pelea anterior. &7Espera a que salgan los jugadores anteriores.'
+
+# SRooms 1.3.5
+room-enter-walking: '&7La room &b%room% &7se juega entrando caminando en ella. &aNo necesitas comandos, kits ni spawns.'
