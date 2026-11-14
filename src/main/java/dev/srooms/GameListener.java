@@ -264,12 +264,19 @@ public final class GameListener implements Listener {
                         && !plugin.duels().isCountingDown(player)
                         && !plugin.duels().isFighting(player)) {
                     plugin.duels().leave(player, false);
-                    event.setTo(player.getLocation());
+                    if (participating.teleportOnJoin()) event.setTo(player.getLocation());
+                    // Physical entry: preserve the player's intended outward
+                    // movement instead of teleporting them back inside.
+                    else plugin.duels().allowReentry(player);
                 } else event.setTo(event.getFrom());
             }
             return;
         }
         Room entered = plugin.rooms().at(event.getTo());
+        if (plugin.duels().needsReentry(player)) {
+            if (entered == null) plugin.duels().allowReentry(player);
+            else return; // Remain unqueued until physically leaving the room.
+        }
         if (entered != null && !plugin.selections().isSelecting(player)) {
             boolean crossedBoundary = !entered.contains(event.getFrom());
             // Staff can crouch to inspect/setup an idle arena without joining.
@@ -283,10 +290,12 @@ public final class GameListener implements Listener {
                 if (entered.enabled() && player.hasPermission("srooms.use")
                         && plugin.duels().participants(entered) < 2
                         && plugin.duels().reopenRemaining(entered) == 0) {
-                    plugin.duels().join(player, entered);
-                    if (plugin.duels().playerRoom(player) == entered)
-                        event.setTo(player.getLocation());
-                    else event.setTo(event.getFrom());
+                    plugin.duels().join(player, entered, event.getTo());
+                    if (plugin.duels().playerRoom(player) == entered) {
+                        // Only change the movement target when teleport-to-spawn
+                        // was explicitly enabled on this room.
+                        if (entered.teleportOnJoin()) event.setTo(player.getLocation());
+                    } else event.setTo(event.getFrom());
                 } else {
                     // Block people crossing the border, but eject guests who
                     // were already inside (do not freeze them in place).
@@ -321,6 +330,8 @@ public final class GameListener implements Listener {
             return;
         }
         if (room == null && event.getTo() != null) {
+            if (plugin.rooms().at(event.getTo()) == null)
+                plugin.duels().allowReentry(player);
             Room destination = plugin.rooms().at(event.getTo());
             if (shouldDenyEntry(player, destination)) {
                 event.setCancelled(true);
@@ -373,6 +384,7 @@ public final class GameListener implements Listener {
             else plugin.msg(player, "kit-recovery-pending");
         }
         Room occupied = plugin.rooms().at(player.getLocation());
+        if (occupied == null) plugin.duels().allowReentry(player);
         if (shouldDenyEntry(player, occupied)) {
             org.bukkit.Bukkit.getScheduler().runTask(plugin, () -> {
                 if (player.isOnline() && shouldDenyEntry(player, occupied)) {
@@ -438,6 +450,7 @@ public final class GameListener implements Listener {
     @EventHandler
     public void onQuit(PlayerQuitEvent event) {
         intruderWarnings.remove(event.getPlayer().getUniqueId());
+        plugin.duels().allowReentry(event.getPlayer());
         plugin.selections().cancel(event.getPlayer(), false);
         plugin.duels().leave(event.getPlayer(), true);
     }

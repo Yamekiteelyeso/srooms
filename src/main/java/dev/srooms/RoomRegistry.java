@@ -37,6 +37,9 @@ public final class RoomRegistry {
         // Every new room is available immediately by walking inside it.
         // Optional gameplay modifiers start disabled; admins opt in as needed.
         room.walkIn(true);
+        room.teleportOnJoin(plugin.getConfig().getBoolean("defaults.teleport-on-join", false));
+        room.openCrystalOnFight(plugin.getConfig().getBoolean("defaults.open-crystal-on-fight", false));
+        room.countdown(plugin.getConfig().getInt("defaults.countdown-seconds", 0));
         room.enabled(true);
         room.keepInventory(plugin.getConfig().getBoolean("defaults.keep-inventory", false));
         room.keepExperience(plugin.getConfig().getBoolean("defaults.keep-experience", false));
@@ -130,11 +133,17 @@ public final class RoomRegistry {
                 room.lockHunger(s.getBoolean("lock-hunger", false));
                 room.healOnJoin(s.getBoolean("heal-on-join", true));
                 room.clearEffects(s.getBoolean("clear-effects", true));
-                room.countdown(s.getInt("countdown", 5));
+                // Old rooms shipped with countdown=5 by default.
+                // Upgrade that legacy default to instant PvP; retain custom values.
+                int savedCountdown = s.getInt("countdown", 5);
+                boolean migrated = s.getBoolean("countdown-policy-v2", false);
+                room.countdown(!migrated && savedCountdown == 5 ? 0 : savedCountdown);
                 room.reopenDelay(s.getInt("reopen-delay", 10));
                 room.duelDuration(s.getInt("duel-duration", plugin.getConfig().getInt("defaults.duel-duration-seconds", 300)));
                 // Migrate old rooms with walk-in=false: entering physically is now mandatory.
                 room.walkIn(true);
+                room.teleportOnJoin(s.getBoolean("teleport-on-join", false));
+                room.openCrystalOnFight(s.getBoolean("open-crystal-on-fight", false));
                 room.blockCommands(s.getBoolean("block-commands", plugin.getConfig().getBoolean("defaults.block-commands", true)));
                 room.blockEnderPearls(s.getBoolean("block-ender-pearls", plugin.getConfig().getBoolean("defaults.block-ender-pearls", true)));
                 room.freezeCountdown(s.getBoolean("freeze-countdown", plugin.getConfig().getBoolean("defaults.freeze-countdown", true)));
@@ -179,9 +188,12 @@ public final class RoomRegistry {
             yaml.set(base + ".heal-on-join", room.healOnJoin());
             yaml.set(base + ".clear-effects", room.clearEffects());
             yaml.set(base + ".countdown", room.countdown());
+            yaml.set(base + ".countdown-policy-v2", true);
             yaml.set(base + ".reopen-delay", room.reopenDelay());
             yaml.set(base + ".duel-duration", room.duelDuration());
             yaml.set(base + ".walk-in", room.walkIn());
+            yaml.set(base + ".teleport-on-join", room.teleportOnJoin());
+            yaml.set(base + ".open-crystal-on-fight", room.openCrystalOnFight());
             yaml.set(base + ".block-commands", room.blockCommands());
             yaml.set(base + ".block-ender-pearls", room.blockEnderPearls());
             yaml.set(base + ".freeze-countdown", room.freezeCountdown());

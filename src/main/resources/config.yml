@@ -1,5 +1,5 @@
 # ================================================================
-# SRooms 1.3.3 | Paper 1.20.1 | Java 17
+# SRooms 1.3.4 | Paper 1.20.1 | Java 17
 # Todas las arenas son 1v1. Los ajustes de cada arena se guardan
 # en rooms.yml y pueden modificarse desde /srooms roomconfig <room>.
 # ================================================================
@@ -38,6 +38,9 @@ selection:
 # caminando también queda activo al actualizar.
 defaults:
   walk-in: true                    # solo compatibilidad: la entrada siempre es andando
+  teleport-on-join: false          # OFF: pelean donde entran; ON: teletransporta a spawns
+  open-crystal-on-fight: false     # OFF: cristal cierra entrada hasta fin; ON: abre al pelear
+  countdown-seconds: 0             # 0 = pelea inmediata cuando entra jugador 2
   keep-inventory: false
   keep-experience: false
   allow-build: false
@@ -54,8 +57,9 @@ defaults:
   duel-duration-seconds: 300       # duración técnica: 5 minutos
 
 duel:
-  # Da 2 segundos para leer "Rival encontrado" antes del countdown.
-  countdown-preparation-ticks: 40
+  # Solo se usa cuando la room tiene countdown > 0.
+  # Si countdown=0, el combate empieza inmediatamente.
+  countdown-preparation-ticks: 0
   # 0 = sin límite de espera. Una room libre con un solo jugador
   # se cancela automáticamente si no llega rival en este intervalo.
   waiting-timeout-seconds: 120

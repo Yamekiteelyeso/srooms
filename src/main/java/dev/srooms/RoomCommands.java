@@ -101,7 +101,7 @@ public final class RoomCommands implements CommandExecutor, TabCompleter {
                 Room room = findRoom(sender, args, "usage-check");
                 if (room == null) return true;
                 String validation = plugin.rooms().validate(room);
-                if (validation == null) {
+                if (validation == null && room.teleportOnJoin()) {
                     org.bukkit.Location a = room.spawnA();
                     org.bukkit.Location b = room.spawnB();
                     if (a == null || b == null) validation = "Falta un spawn seguro (A o B).";

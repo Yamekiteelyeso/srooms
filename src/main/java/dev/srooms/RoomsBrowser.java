@@ -58,7 +58,9 @@ public final class RoomsBrowser implements Listener {
             Room room = rooms.get(offset + i);
             names.add(room.name());
             int size = plugin.duels().participants(room);
-            boolean available = room.enabled() && size < 2 && plugin.duels().reopenRemaining(room) == 0;
+            boolean available = room.enabled() && size < 2
+                    && plugin.duels().reopenRemaining(room) == 0
+                    && (size == 1 || !plugin.duels().isOccupied(room));
             Material icon = !room.enabled() ? Material.BARRIER : available
                     ? Material.LIME_STAINED_GLASS : Material.RED_STAINED_GLASS;
             inventory.setItem(i, item(icon, "&b&l" + room.name(),
