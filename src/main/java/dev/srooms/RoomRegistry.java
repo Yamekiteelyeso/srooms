@@ -38,6 +38,7 @@ public final class RoomRegistry {
         // Optional gameplay modifiers start disabled; admins opt in as needed.
         room.walkIn(true);
         room.teleportOnJoin(plugin.getConfig().getBoolean("defaults.teleport-on-join", false));
+        room.openCrystalOnFight(plugin.getConfig().getBoolean("defaults.open-crystal-on-fight", false));
         room.countdown(plugin.getConfig().getInt("defaults.countdown-seconds", 0));
         room.enabled(true);
         room.keepInventory(plugin.getConfig().getBoolean("defaults.keep-inventory", false));
@@ -142,6 +143,7 @@ public final class RoomRegistry {
                 // Migrate old rooms with walk-in=false: entering physically is now mandatory.
                 room.walkIn(true);
                 room.teleportOnJoin(s.getBoolean("teleport-on-join", false));
+                room.openCrystalOnFight(s.getBoolean("open-crystal-on-fight", false));
                 room.blockCommands(s.getBoolean("block-commands", plugin.getConfig().getBoolean("defaults.block-commands", true)));
                 room.blockEnderPearls(s.getBoolean("block-ender-pearls", plugin.getConfig().getBoolean("defaults.block-ender-pearls", true)));
                 room.freezeCountdown(s.getBoolean("freeze-countdown", plugin.getConfig().getBoolean("defaults.freeze-countdown", true)));
@@ -191,6 +193,7 @@ public final class RoomRegistry {
             yaml.set(base + ".duel-duration", room.duelDuration());
             yaml.set(base + ".walk-in", room.walkIn());
             yaml.set(base + ".teleport-on-join", room.teleportOnJoin());
+            yaml.set(base + ".open-crystal-on-fight", room.openCrystalOnFight());
             yaml.set(base + ".block-commands", room.blockCommands());
             yaml.set(base + ".block-ender-pearls", room.blockEnderPearls());
             yaml.set(base + ".freeze-countdown", room.freezeCountdown());
