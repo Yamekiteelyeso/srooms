@@ -1,8 +1,20 @@
-# SRooms 1.3.2
+# SRooms 1.3.3
 
 **Paper 1.20.1 · Java 17 · Maven · Sin dependencias obligatorias**
 
 Plugin de salas 1v1 para BoxPvP, Practice y PvP. Máximo **2 participantes por arena**.
+
+## Cambio principal de 1.3.3: entrar CAMINANDO
+
+**Ya no hace falta un comando para entrar en una room.** Cuando un jugador con `srooms.use` atraviesa el borde de una arena disponible, SRooms lo registra automáticamente como participante 1/2 o 2/2, lo teletransporta al spawn que corresponda, muestra el título y prepara el 1v1. La entrada automática queda habilitada para **rooms nuevas y existentes**, incluso si antes tenían `walk-in: false`. El comando `/srooms join` sigue como alternativa, pero nunca es obligatorio.
+
+**Todas las opciones adicionales de las nuevas rooms quedan desactivadas**: conservar inventario/XP, construir, hambre congelada, curar, limpiar efectos, bloquear comandos y perlas, congelar cuenta regresiva, kits, recompensas, Ranked y efectos de poción. El retardo de reapertura empieza en 0 segundos. La **room permanece habilitada** y la entrada caminando siempre está activa, porque son funciones básicas del plugin.
+
+**Rooms dibujadas sobre el suelo:** cuando la selección vertical cubre solo uno o dos bloques, SRooms extiende automáticamente su altura a 12 bloques (configurable). También normaliza las rooms recientes guardadas con altura insuficiente al cargarlas. El perímetro horizontal se conserva.
+
+**Salir sin comando:** si estás esperando rival, puedes salir de la room caminando fuera de sus límites; durante la cuenta regresiva y el combate sigues sujeto al bloqueo de salida. Los administradores pueden entrar **agachados** a una sala vacía para configurarla sin iniciar un combate.
+
+**Configurable:** `access.walk-out-while-waiting`, `selection.minimum-room-height` y la sección `defaults`. Los ajustes opcionales de las rooms anteriores se conservan sin cambios; solo se activa el mecanismo de entrada por proximidad.
 
 ## Instalación
 
@@ -14,7 +26,7 @@ Compila con **mvn clean package** o descarga el JAR desde el artifact de GitHub 
 | --- | --- | --- |
 | /srooms gui | Menú público de salas con estados | srooms.use |
 | /srooms list | Lista de rooms y ocupación | srooms.use |
-| /srooms join <room> | Entrar a combatir | srooms.use |
+| /srooms join <room> | Entrada alternativa, no necesaria: basta caminar dentro | srooms.use |
 | /srooms leave | Abandonar combate | srooms.use |
 | /srooms info <room> | Datos de la room | srooms.use |
 | /srooms stats [jugador] | Victorias, derrotas y rachas | srooms.use |
@@ -151,7 +163,7 @@ Las arenas previas se cargan sin borrarse. Los archivos globales se amplían con
 
 Comprueba creación, selección, reapertura, duelos con dos y tres jugadores, entrada automática, empate por timeout, BossBar, stats, protección de construcción, restitución de jugador, premios opt-in y persistencia después del reinicio.
 
-**Build y pruebas:** mvn clean verify => target/SRooms-1.3.2.jar.
+**Build y pruebas:** mvn clean verify => target/SRooms-1.3.3.jar.
 
 **Nota:** la compilación por CI valida que el proyecto genere el JAR; antes de producción comprueba los flujos en un servidor de prueba Paper 1.20.1.
 
