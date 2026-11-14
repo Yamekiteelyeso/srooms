@@ -34,10 +34,23 @@ public final class RoomRegistry {
     }
 
     public void add(Room room) {
-        room.walkIn(plugin.getConfig().getBoolean("defaults.walk-in", false));
-        room.blockCommands(plugin.getConfig().getBoolean("defaults.block-commands", true));
-        room.blockEnderPearls(plugin.getConfig().getBoolean("defaults.block-ender-pearls", true));
-        room.freezeCountdown(plugin.getConfig().getBoolean("defaults.freeze-countdown", true));
+        // Every new room is available immediately by walking inside it.
+        // Optional gameplay modifiers start disabled; admins opt in as needed.
+        room.walkIn(true);
+        room.enabled(true);
+        room.keepInventory(plugin.getConfig().getBoolean("defaults.keep-inventory", false));
+        room.keepExperience(plugin.getConfig().getBoolean("defaults.keep-experience", false));
+        room.allowBuild(plugin.getConfig().getBoolean("defaults.allow-build", false));
+        room.lockHunger(plugin.getConfig().getBoolean("defaults.lock-hunger", false));
+        room.healOnJoin(plugin.getConfig().getBoolean("defaults.heal-on-join", false));
+        room.clearEffects(plugin.getConfig().getBoolean("defaults.clear-effects", false));
+        room.blockCommands(plugin.getConfig().getBoolean("defaults.block-commands", false));
+        room.blockEnderPearls(plugin.getConfig().getBoolean("defaults.block-ender-pearls", false));
+        room.freezeCountdown(plugin.getConfig().getBoolean("defaults.freeze-countdown", false));
+        room.kitEnabled(plugin.getConfig().getBoolean("defaults.kit-enabled", false));
+        room.rewardWinner(plugin.getConfig().getBoolean("defaults.reward-winner", false));
+        room.ranked(plugin.getConfig().getBoolean("defaults.ranked", false));
+        room.reopenDelay(plugin.getConfig().getInt("defaults.reopen-delay-seconds", 0));
         room.duelDuration(plugin.getConfig().getInt("defaults.duel-duration-seconds", 300));
         room.barrierMaterial(plugin.getConfig().getString("duel.gate-material", "GLASS"));
         rooms.put(room.name().toLowerCase(Locale.ROOT), room);
@@ -115,7 +128,8 @@ public final class RoomRegistry {
                 room.countdown(s.getInt("countdown", 5));
                 room.reopenDelay(s.getInt("reopen-delay", 10));
                 room.duelDuration(s.getInt("duel-duration", plugin.getConfig().getInt("defaults.duel-duration-seconds", 300)));
-                room.walkIn(s.getBoolean("walk-in", plugin.getConfig().getBoolean("defaults.walk-in", false)));
+                // Migrate old rooms with walk-in=false: entering physically is now mandatory.
+                room.walkIn(true);
                 room.blockCommands(s.getBoolean("block-commands", plugin.getConfig().getBoolean("defaults.block-commands", true)));
                 room.blockEnderPearls(s.getBoolean("block-ender-pearls", plugin.getConfig().getBoolean("defaults.block-ender-pearls", true)));
                 room.freezeCountdown(s.getBoolean("freeze-countdown", plugin.getConfig().getBoolean("defaults.freeze-countdown", true)));
