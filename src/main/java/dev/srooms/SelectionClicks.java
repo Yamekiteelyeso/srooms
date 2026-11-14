@@ -14,7 +14,7 @@ final class SelectionClicks {
     private final long stageCooldownNanos;
     private Point first;
     private long firstAt;
-    private long readyAt;
+    private long readyAt = Long.MIN_VALUE;
 
     SelectionClicks(int minClickGapMillis, int stageCooldownMillis) {
         minClickGapNanos = Math.max(0, Math.min(1000, minClickGapMillis)) * 1_000_000L;
