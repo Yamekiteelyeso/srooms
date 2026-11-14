@@ -395,6 +395,8 @@ public final class DuelManager {
             Player second = Bukkit.getPlayer(match.second);
             if (first == null || second == null || !match.room.contains(first.getLocation())
                     || !match.room.contains(second.getLocation())) {
+                // A failed movement/teleport is a cancellation, not a draw.
+                match.phase = Phase.WAITING;
                 finish(match, null, false);
                 return;
             }
