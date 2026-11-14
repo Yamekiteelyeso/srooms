@@ -39,6 +39,7 @@ selection:
 defaults:
   walk-in: true                    # solo compatibilidad: la entrada siempre es andando
   teleport-on-join: false          # OFF: pelean donde entran; ON: teletransporta a spawns
+  open-crystal-on-fight: false     # OFF: cristal cierra entrada hasta fin; ON: abre al pelear
   countdown-seconds: 0             # 0 = pelea inmediata cuando entra jugador 2
   keep-inventory: false
   keep-experience: false
