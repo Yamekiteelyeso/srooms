@@ -29,6 +29,22 @@ public final class SRoomsPlugin extends JavaPlugin {
     public void onEnable() {
         saveDefaultConfig();
         getConfig().options().copyDefaults(true);
+        // One-time upgrade: previous versions shipped several options ON
+        // by default. Leave existing individual room settings untouched,
+        // but switch the template for NEW rooms to all-off as requested.
+        if (!getConfig().getBoolean("migration.defaults-1-3-3", false)) {
+            for (String key : new String[]{
+                    "keep-inventory", "keep-experience", "allow-build",
+                    "lock-hunger", "heal-on-join", "clear-effects",
+                    "block-commands", "block-ender-pearls",
+                    "freeze-countdown", "kit-enabled", "reward-winner",
+                    "ranked"}) {
+                getConfig().set("defaults." + key, false);
+            }
+            getConfig().set("defaults.walk-in", true);
+            getConfig().set("defaults.reopen-delay-seconds", 0);
+            getConfig().set("migration.defaults-1-3-3", true);
+        }
         saveConfig();
         File messagesFile = new File(getDataFolder(), "messages.yml");
         if (!messagesFile.exists()) saveResource("messages.yml", false);
