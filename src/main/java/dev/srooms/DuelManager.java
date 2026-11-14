@@ -389,48 +389,53 @@ public final class DuelManager {
         boolean instant = DuelFlowRules.startImmediately(match.room.countdown());
         match.phase = instant ? Phase.FIGHT : Phase.COUNTDOWN;
         if (instant) announceFight(match);
-        Bukkit.getScheduler().runTask(plugin, () -> {
-            if (matches.get(roomKey(match.room)) != match) return;
-            Player first = Bukkit.getPlayer(match.first);
-            Player second = Bukkit.getPlayer(match.second);
-            if (first == null || second == null || !DuelFlowRules.shouldPlaceCrystal(
-                    match.second == null ? 1 : 2,
-                    match.room.contains(first.getLocation()),
-                    match.room.contains(second.getLocation()))) {
-                // A failed movement/teleport is a cancellation, not a draw.
-                match.phase = Phase.WAITING;
-                finish(match, null, false);
-                return;
-            }
-            // Never spawn glass inside a participant's feet or head.
-            // Fighting continues without the barrier if the selection is unsafe.
-            if (match.room.gate().contains(first.getLocation())
-                    || match.room.gate().contains(first.getLocation().clone().add(0, 1, 0))
-                    || match.room.gate().contains(second.getLocation())
-                    || match.room.gate().contains(second.getLocation().clone().add(0, 1, 0))) {
+        Bukkit.getScheduler().runTask(plugin, () -> attemptActivateCrystal(match, 0, instant));
+    }
+
+    private void attemptActivateCrystal(Match match, int attempts, boolean instant) {
+        if (matches.get(roomKey(match.room)) != match) return;
+        Player first = Bukkit.getPlayer(match.first);
+        Player second = Bukkit.getPlayer(match.second);
+        if (first == null || second == null || !DuelFlowRules.shouldPlaceCrystal(
+                match.second == null ? 1 : 2,
+                match.room.contains(first.getLocation()),
+                match.room.contains(second.getLocation()))) {
+            // Failed movement/teleport must never count as a ranked draw.
+            match.phase = Phase.WAITING;
+            finish(match, null, false);
+            return;
+        }
+        // A player might have stepped into the glass area at the boundary.
+        // Try again briefly instead of trapping/suffocating them.
+        if (match.room.gate().contains(first.getLocation())
+                || match.room.gate().contains(first.getLocation().clone().add(0, 1, 0))
+                || match.room.gate().contains(second.getLocation())
+                || match.room.gate().contains(second.getLocation().clone().add(0, 1, 0))) {
+            if (attempts < 40) {
+                Bukkit.getScheduler().runTaskLater(plugin,
+                        () -> attemptActivateCrystal(match, attempts + 1, instant), 1L);
+            } else {
                 plugin.getLogger().warning("Cristal de " + match.room.name()
-                        + " solapa un jugador; se omite para evitar asfixia.");
+                        + " solapa un jugador: no se colocó para evitar asfixia.");
                 if (!instant) announceFight(match);
-                return;
             }
-            if (!closeGate(match.room)) {
-                plugin.getLogger().warning("No se pudo colocar el cristal en " + match.room.name());
-                // Fight can proceed even if writing recovery failed; never
-                // corrupt world blocks without saving their originals.
-                if (!instant) announceFight(match);
-                return;
+            return;
+        }
+        if (!closeGate(match.room)) {
+            plugin.getLogger().warning("No se pudo guardar el cristal de " + match.room.name());
+            // Do not edit the world if backing up the original blocks failed.
+            if (!instant) announceFight(match);
+            return;
+        }
+        if (instant) {
+            // Default: close entrance glass until match end. Opt in to
+            // separating-wall behavior when admins want it to open on fight.
+            if (match.room.openCrystalOnFight()) {
+                Bukkit.getScheduler().runTaskLater(plugin, () -> {
+                    if (matches.get(roomKey(match.room)) == match) openGate(match.room);
+                }, 1L);
             }
-            if (instant) {
-                // Default: crystal closes the entrance and remains until
-                // the duel ends. Arena owners may choose the old separator
-                // behavior and open it when combat starts.
-                if (match.room.openCrystalOnFight()) {
-                    Bukkit.getScheduler().runTaskLater(plugin, () -> {
-                        if (matches.get(roomKey(match.room)) == match) openGate(match.room);
-                    }, 1L);
-                }
-            } else startCountdown(match);
-        });
+        } else startCountdown(match);
     }
 
     private void announceFight(Match match) {
