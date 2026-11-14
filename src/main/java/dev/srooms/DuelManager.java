@@ -166,7 +166,20 @@ public final class DuelManager {
         Match match = players.get(player.getUniqueId());
         return match == null ? null : match.room;
     }
-    public boolean isOccupied(Room room) { return matches.containsKey(roomKey(room)) || reopeningAt.containsKey(roomKey(room)); }
+    private boolean awaitingExit(Room room) {
+        World world = room.a().world();
+        if (world == null) return false;
+        for (Player player : world.getPlayers()) {
+            if (reentryRequired.contains(player.getUniqueId())
+                    && room.contains(player.getLocation())) return true;
+        }
+        return false;
+    }
+
+    public boolean isOccupied(Room room) {
+        return matches.containsKey(roomKey(room)) || reopeningAt.containsKey(roomKey(room))
+                || awaitingExit(room);
+    }
     private String roomKey(Room room) { return room.name().toLowerCase(java.util.Locale.ROOT); }
     public int reopenRemaining(Room room) {
         Long until = reopeningAt.get(roomKey(room));
@@ -179,6 +192,7 @@ public final class DuelManager {
     public String state(Room room) {
         Match match = matches.get(room.name().toLowerCase(java.util.Locale.ROOT));
         if (reopeningAt.containsKey(roomKey(room))) return "REAPERTURA " + reopenRemaining(room) + "s";
+        if (match == null && awaitingExit(room)) return "ESPERANDO SALIDA";
         if (match == null && !room.enabled()) return "DESACTIVADA";
         return match == null ? "LIBRE" : match.phase.name();
     }
@@ -231,6 +245,10 @@ public final class DuelManager {
             return;
         }
         Match match = matches.get(key);
+        if (match == null && awaitingExit(room)) {
+            plugin.msg(player, "room-clearing", "room", room.name());
+            return;
+        }
         if (match != null && match.second != null) {
             plugin.msg(player, "room-busy", "room", room.name());
             return;
