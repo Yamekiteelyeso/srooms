@@ -261,13 +261,26 @@ public final class GameListener implements Listener {
             return;
         }
         Room entered = plugin.rooms().at(event.getTo());
-        if (entered != null && !entered.contains(event.getFrom())
-                && entered.walkIn() && !plugin.selections().isSelecting(player)
-                && player.hasPermission("srooms.use")) {
-            plugin.duels().join(player, entered);
-            if (plugin.duels().playerRoom(player) == entered) event.setTo(player.getLocation());
-            else event.setTo(event.getFrom());
-            return;
+        if (entered != null && !plugin.selections().isSelecting(player)) {
+            boolean crossedBoundary = !entered.contains(event.getFrom());
+            // Staff can crouch to inspect/setup an idle arena without joining.
+            boolean editing = player.hasPermission("srooms.admin") && player.isSneaking();
+            if (crossedBoundary && !editing) {
+                // Walking inside is always the way to join (even when older
+                // rooms.yml files had walk-in=false).
+                if (entered.enabled() && player.hasPermission("srooms.use")
+                        && plugin.duels().participants(entered) < 2
+                        && plugin.duels().reopenRemaining(entered) == 0) {
+                    plugin.duels().join(player, entered);
+                    if (plugin.duels().playerRoom(player) == entered)
+                        event.setTo(player.getLocation());
+                    else event.setTo(event.getFrom());
+                } else {
+                    event.setTo(event.getFrom());
+                    warnIntruder(player, entered);
+                }
+                return;
+            }
         }
         if (shouldDenyEntry(player, entered)) {
             if (entered.contains(event.getFrom())) {
