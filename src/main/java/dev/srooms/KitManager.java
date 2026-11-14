@@ -3,7 +3,6 @@ package dev.srooms;
 import org.bukkit.Location;
 import org.bukkit.GameMode;
 import org.bukkit.potion.PotionEffect;
-import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
@@ -11,33 +10,22 @@ import org.bukkit.inventory.ItemStack;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
-import java.util.Locale;
-import java.util.UUID;
 
 /**
- * Optional per-room kit templates. Original player inventories are written to a
- * separate recovery file BEFORE any item replacement, so a server crash does
- * not permanently strand a player with a duel kit.
+ * Legacy inventory recovery only. Arena kits were removed in 1.3.5.
+ * Existing kit-recovery.yml snapshots must remain restorable after upgrades;
+ * no new kit templates or item replacements can be created.
  */
 public final class KitManager {
     private final SRoomsPlugin plugin;
-    private final File kitsFile;
     private final File recoveryFile;
-    private YamlConfiguration templates;
     private YamlConfiguration recovery;
 
     public KitManager(SRoomsPlugin plugin) {
         this.plugin = plugin;
-        kitsFile = new File(plugin.getDataFolder(), "kits.yml");
-        recoveryFile = new File(plugin.getDataFolder(), "kit-recovery.yml");
-        templates = YamlConfiguration.loadConfiguration(kitsFile);
-        recovery = YamlConfiguration.loadConfiguration(recoveryFile);
-    }
-
-    private String key(Room room) {
-        return "kits." + room.name().toLowerCase(Locale.ROOT);
+        this.recoveryFile = new File(plugin.getDataFolder(), "kit-recovery.yml");
+        this.recovery = YamlConfiguration.loadConfiguration(recoveryFile);
     }
 
     private String playerKey(Player player) {
@@ -47,35 +35,9 @@ public final class KitManager {
     private ItemStack[] items(List<?> list, int size) {
         ItemStack[] result = new ItemStack[size];
         if (list == null) return result;
-        for (int i = 0; i < Math.min(list.size(), size); i++) {
+        for (int i = 0; i < Math.min(list.size(), size); i++)
             if (list.get(i) instanceof ItemStack item) result[i] = item.clone();
-        }
         return result;
-    }
-
-    private List<ItemStack> copy(ItemStack[] items) {
-        List<ItemStack> result = new ArrayList<>(items.length);
-        for (ItemStack item : items) result.add(item == null ? null : item.clone());
-        return result;
-    }
-
-    private void capture(YamlConfiguration yaml, String base, Player player) {
-        yaml.set(base + ".storage", copy(player.getInventory().getStorageContents()));
-        yaml.set(base + ".armor", copy(player.getInventory().getArmorContents()));
-        ItemStack offhand = player.getInventory().getItemInOffHand();
-        yaml.set(base + ".offhand", offhand == null ? null : offhand.clone());
-        yaml.set(base + ".level", player.getLevel());
-        yaml.set(base + ".exp", player.getExp());
-        yaml.set(base + ".total-exp", player.getTotalExperience());
-        yaml.set(base + ".game-mode", player.getGameMode().name());
-        yaml.set(base + ".allow-flight", player.getAllowFlight());
-        yaml.set(base + ".flying", player.isFlying());
-        yaml.set(base + ".health", player.getHealth());
-        yaml.set(base + ".food", player.getFoodLevel());
-        yaml.set(base + ".saturation", player.getSaturation());
-        yaml.set(base + ".exhaustion", player.getExhaustion());
-        yaml.set(base + ".fire-ticks", player.getFireTicks());
-        yaml.set(base + ".potions", new ArrayList<>(player.getActivePotionEffects()));
     }
 
     private boolean save(YamlConfiguration yaml, File file) {
@@ -88,59 +50,8 @@ public final class KitManager {
         }
     }
 
-    public boolean hasKit(Room room) {
-        return templates.isList(key(room) + ".storage");
-    }
-
-    public boolean saveKit(Room room, Player player) {
-        if (player == null) return false;
-        String path = key(room);
-        YamlConfiguration next = YamlConfiguration.loadConfiguration(kitsFile);
-        capture(next, path, player);
-        next.set(path + ".name", room.name());
-        if (!save(next, kitsFile)) return false;
-        templates = next;
-        return true;
-    }
-
-    public boolean clearKit(Room room) {
-        YamlConfiguration next = YamlConfiguration.loadConfiguration(kitsFile);
-        next.set(key(room), null);
-        if (!save(next, kitsFile)) return false;
-        templates = next;
-        room.kitEnabled(false);
-        plugin.rooms().save();
-        return true;
-    }
-
     public boolean pending(Player player) {
         return recovery.isConfigurationSection(playerKey(player));
-    }
-
-    /**
-     * Returns false (without modifying inventory) on failed recovery write.
-     * The caller must cancel the join if this happens.
-     */
-    public boolean apply(Player player, Room room, Location oldLocation) {
-        if (!room.kitEnabled()) return true;
-        if (!hasKit(room) || pending(player)) return false;
-
-        String path = playerKey(player);
-        capture(recovery, path, player);
-        recovery.set(path + ".location", oldLocation);
-        if (!save(recovery, recoveryFile)) {
-            recovery.set(path, null);
-            return false;
-        }
-
-        String kit = key(room);
-        player.getInventory().setStorageContents(
-                items(templates.getList(kit + ".storage"), player.getInventory().getStorageContents().length));
-        player.getInventory().setArmorContents(items(templates.getList(kit + ".armor"), 4));
-        ItemStack offhand = templates.getItemStack(kit + ".offhand");
-        player.getInventory().setItemInOffHand(offhand == null ? null : offhand.clone());
-        player.updateInventory();
-        return true;
     }
 
     public boolean restore(Player player, boolean teleport) {
@@ -203,11 +114,6 @@ public final class KitManager {
     }
 
     public void reload() {
-        templates = YamlConfiguration.loadConfiguration(kitsFile);
-    }
-
-    public void removeRoom(Room room) {
-        // Preserve kit file on disk if there are old backups; this only removes template.
-        clearKit(room);
+        recovery = YamlConfiguration.loadConfiguration(recoveryFile);
     }
 }
