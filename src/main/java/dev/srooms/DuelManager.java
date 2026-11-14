@@ -273,16 +273,47 @@ public final class DuelManager {
         applyRoomSettings(player, room);
         ejectIntruders(room);
         if (match.first.equals(player.getUniqueId())) {
-            plugin.msg(player, "joined-wait", "room", room.name());
+            announceJoin(player, room, 1);
+            plugin.msg(player, "joined-wait", "room", room.name(),
+                    "players", "1", "max", "2");
             startWaitingTimer(match);
         } else {
             match.second = player.getUniqueId();
             match.secondName = player.getName();
-            plugin.msg(player, "joined-start");
+            announceJoin(player, room, 2);
+            plugin.msg(player, "joined-start",
+                    "room", room.name(), "opponent", match.firstName,
+                    "players", "2", "max", "2");
             Player first = Bukkit.getPlayer(match.first);
-            if (first != null) plugin.msg(first, "joined-start");
+            if (first != null) {
+                plugin.msg(first, "opponent-joined",
+                        "room", room.name(), "opponent", player.getName(),
+                        "players", "2", "max", "2");
+                announceOpponent(first, room, player.getName());
+            }
             startCountdown(match);
         }
+    }
+
+    private void announceJoin(Player player, Room room, int participants) {
+        String count = String.valueOf(participants);
+        plugin.msg(player, "joined-room", "room", room.name(),
+                "players", count, "max", "2");
+        if (!plugin.getConfig().getBoolean("ui.join-titles.enabled", true)) return;
+        player.sendTitle(plugin.raw("join-title", "room", room.name(),
+                        "players", count, "max", "2"),
+                plugin.raw("join-subtitle", "room", room.name(),
+                        "players", count, "max", "2"),
+                5, 35, 10);
+    }
+
+    private void announceOpponent(Player player, Room room, String opponent) {
+        if (!plugin.getConfig().getBoolean("ui.join-titles.enabled", true)) return;
+        player.sendTitle(plugin.raw("opponent-title", "room", room.name(),
+                        "opponent", opponent, "players", "2", "max", "2"),
+                plugin.raw("opponent-subtitle", "room", room.name(),
+                        "opponent", opponent, "players", "2", "max", "2"),
+                5, 35, 10);
     }
 
     private void applyRoomSettings(Player player, Room room) {
@@ -350,7 +381,10 @@ public final class DuelManager {
                 plugin.playSound(b, "countdown");
                 remaining--;
             }
-        }.runTaskTimer(plugin, 0L, 20L);
+        }.runTaskTimer(plugin,
+                Math.max(1L, Math.min(100L,
+                        plugin.getConfig().getLong("duel.countdown-preparation-ticks", 40L))),
+                20L);
     }
 
     private void startCombatTimer(Match match) {
