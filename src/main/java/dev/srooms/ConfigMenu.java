@@ -83,14 +83,6 @@ public final class ConfigMenu implements Listener {
         toggle(menu, 30, Material.LEVER, "Room habilitada", room.enabled(), "Activa o desactiva nuevos combates");
         toggle(menu, 39, Material.DIAMOND, "Recompensa al ganador", room.rewardWinner(),
                 "Ejecuta comandos configurados al ganar");
-        menu.setItem(41, item(room.kitEnabled() ? Material.DIAMOND_CHESTPLATE : Material.IRON_CHESTPLATE,
-                "&bKit de la arena",
-                "&7Kit guardado: " + (plugin.kits().hasKit(room) ? "&aSÍ" : "&cNO"),
-                "&7Usar kit: " + (room.kitEnabled() ? "&aACTIVADO" : "&cDESACTIVADO"),
-                "&7Guardar: &f/srooms kit save " + room.name(),
-                "&eClic para alternar"));
-        toggle(menu, 44, Material.NETHERITE_SWORD, "Combate Ranked", room.ranked(),
-                "Victorias y empates modifican el ELO");
         Material barrier = Material.matchMaterial(room.barrierMaterial());
         if (barrier == null) barrier = Material.GLASS;
         menu.setItem(31, item(barrier, "&bCristal de cierre", "&7Material actual: &f" + room.barrierMaterial(),
@@ -122,12 +114,6 @@ public final class ConfigMenu implements Listener {
                 "&7Límite: &f" + room.duelDuration() + " segundos", "&eClic: +30s"));
         menu.setItem(38, item(Material.REDSTONE, "&c-1 segundo", "&7Countdown actual: &f" + room.countdown() + " s", "&7A 0 segundos se pelea al entrar el segundo."));
         menu.setItem(40, item(Material.EMERALD, "&a+1 segundo", "&7Countdown actual: &f" + room.countdown() + " s", "&70 = combate inmediato."));
-        menu.setItem(42, item(Material.LIME_BED, "&aSpawn jugador 1",
-                "&7Ubícate dentro de la room, fuera del cristal",
-                "&7Y haz clic para guardar la posición"));
-        menu.setItem(43, item(Material.RED_BED, "&cSpawn jugador 2",
-                "&7Ubícate en el lado contrario de la room",
-                "&7Y haz clic para guardar la posición"));
         menu.setItem(49, item(Material.BARRIER, "&cCerrar menú"));
         player.openInventory(menu);
     }
@@ -162,13 +148,6 @@ public final class ConfigMenu implements Listener {
             case 28 -> room.freezeCountdown(!room.freezeCountdown());
             case 30 -> room.enabled(!room.enabled());
             case 39 -> room.rewardWinner(!room.rewardWinner());
-            case 44 -> room.ranked(!room.ranked());
-            case 41 -> {
-                if (!room.kitEnabled() && !plugin.kits().hasKit(room)) {
-                    plugin.msg(player, "kit-missing", "room", room.name());
-                    changed = false;
-                } else room.kitEnabled(!room.kitEnabled());
-            }
             case 31 -> room.cycleBarrier();
             case 35 -> room.duelDuration(room.duelDuration() - 30);
             case 36 -> room.duelDuration(room.duelDuration() + 30);
@@ -176,32 +155,6 @@ public final class ConfigMenu implements Listener {
             case 34 -> room.reopenDelay(room.reopenDelay() + (event.isShiftClick() ? 5 : 1));
             case 38 -> room.countdown(room.countdown() - 1);
             case 40 -> room.countdown(room.countdown() + 1);
-            case 42 -> {
-                Location pos = player.getLocation();
-                if (!room.validSpawn(pos)) {
-                    plugin.msg(player, "selection-invalid", "reason",
-                            "Debes estar dentro de la room y fuera del cristal.");
-                    changed = false;
-                } else if (room.configuredSpawnB() != null
-                        && room.configuredSpawnB().distanceSquared(pos) < 1) {
-                    plugin.msg(player, "selection-invalid", "reason",
-                            "Los dos spawns no pueden estar en la misma posición.");
-                    changed = false;
-                } else room.spawnA(pos);
-            }
-            case 43 -> {
-                Location pos = player.getLocation();
-                if (!room.validSpawn(pos)) {
-                    plugin.msg(player, "selection-invalid", "reason",
-                            "Debes estar dentro de la room y fuera del cristal.");
-                    changed = false;
-                } else if (room.configuredSpawnA() != null
-                        && room.configuredSpawnA().distanceSquared(pos) < 1) {
-                    plugin.msg(player, "selection-invalid", "reason",
-                            "Los dos spawns no pueden estar en la misma posición.");
-                    changed = false;
-                } else room.spawnB(pos);
-            }
             default -> {
                 String effect = EFFECT_SLOTS.get(slot);
                 if (effect == null) changed = false;

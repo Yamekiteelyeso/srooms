@@ -50,9 +50,7 @@ public final class RoomRegistry {
         room.blockCommands(plugin.getConfig().getBoolean("defaults.block-commands", false));
         room.blockEnderPearls(plugin.getConfig().getBoolean("defaults.block-ender-pearls", false));
         room.freezeCountdown(plugin.getConfig().getBoolean("defaults.freeze-countdown", false));
-        room.kitEnabled(plugin.getConfig().getBoolean("defaults.kit-enabled", false));
         room.rewardWinner(plugin.getConfig().getBoolean("defaults.reward-winner", false));
-        room.ranked(plugin.getConfig().getBoolean("defaults.ranked", false));
         room.reopenDelay(plugin.getConfig().getInt("defaults.reopen-delay-seconds", 0));
         room.duelDuration(plugin.getConfig().getInt("defaults.duel-duration-seconds", 300));
         room.barrierMaterial(plugin.getConfig().getString("duel.gate-material", "GLASS"));
@@ -149,13 +147,7 @@ public final class RoomRegistry {
                 room.freezeCountdown(s.getBoolean("freeze-countdown", plugin.getConfig().getBoolean("defaults.freeze-countdown", true)));
                 room.enabled(s.getBoolean("enabled", true));
                 room.rewardWinner(s.getBoolean("reward-winner", false));
-                room.kitEnabled(s.getBoolean("kit-enabled", false));
-                room.ranked(s.getBoolean("ranked", false));
                 room.barrierMaterial(s.getString("barrier-material", plugin.getConfig().getString("duel.gate-material", "GLASS")));
-                Location spawnA = s.getLocation("spawn-a");
-                Location spawnB = s.getLocation("spawn-b");
-                if (room.validSpawn(spawnA)) room.spawnA(spawnA);
-                if (room.validSpawn(spawnB)) room.spawnB(spawnB);
                 ConfigurationSection effects = s.getConfigurationSection("effects");
                 if (effects != null) for (String effect : effects.getKeys(false)) {
                     int level = effects.getInt(effect);
@@ -179,8 +171,6 @@ public final class RoomRegistry {
                 room.b().write(yaml, base + ".b");
             } else room.region().write(yaml, base + ".region");
             room.gate().write(yaml, base + ".gate");
-            yaml.set(base + ".spawn-a", room.configuredSpawnA());
-            yaml.set(base + ".spawn-b", room.configuredSpawnB());
             yaml.set(base + ".keep-inventory", room.keepInventory());
             yaml.set(base + ".keep-experience", room.keepExperience());
             yaml.set(base + ".allow-build", room.allowBuild());
@@ -199,8 +189,6 @@ public final class RoomRegistry {
             yaml.set(base + ".freeze-countdown", room.freezeCountdown());
             yaml.set(base + ".enabled", room.enabled());
             yaml.set(base + ".reward-winner", room.rewardWinner());
-            yaml.set(base + ".kit-enabled", room.kitEnabled());
-            yaml.set(base + ".ranked", room.ranked());
             yaml.set(base + ".barrier-material", room.barrierMaterial());
             for (Map.Entry<String, Integer> effect : room.effects().entrySet())
                 yaml.set(base + ".effects." + effect.getKey(), effect.getValue());

@@ -37,14 +37,19 @@ public final class SRoomsPlugin extends JavaPlugin {
                     "keep-inventory", "keep-experience", "allow-build",
                     "lock-hunger", "heal-on-join", "clear-effects",
                     "block-commands", "block-ender-pearls",
-                    "freeze-countdown", "kit-enabled", "reward-winner",
-                    "ranked"}) {
+                    "freeze-countdown", "reward-winner"}) {
                 getConfig().set("defaults." + key, false);
             }
             getConfig().set("defaults.walk-in", true);
             getConfig().set("defaults.reopen-delay-seconds", 0);
             getConfig().set("migration.defaults-1-3-3", true);
         }
+        // Clean up removed feature switches from servers upgraded from
+        // older SRooms versions. Historical inventory recovery is untouched.
+        getConfig().set("defaults.kit-enabled", null);
+        getConfig().set("defaults.ranked", null);
+        getConfig().set("ranked", null);
+        getConfig().set("kits", null);
         saveConfig();
         File messagesFile = new File(getDataFolder(), "messages.yml");
         if (!messagesFile.exists()) saveResource("messages.yml", false);
@@ -83,6 +88,26 @@ public final class SRoomsPlugin extends JavaPlugin {
             for (Map.Entry<String, String> old : legacyMessages.entrySet()) {
                 if (old.getValue().equals(messages.getString(old.getKey())))
                     messages.set(old.getKey(), newDefaults.getString(old.getKey()));
+            }
+            // Update only exact bundled 1.3.4 messages. Owners who wrote
+            // custom text keep it unchanged.
+            Map<String, String> previousDefaults = new LinkedHashMap<>();
+            previousDefaults.put("help-player", "&aPara entrar a una room simplemente camina dentro de ella. &7/srooms gui &8• &fmenú &8| &7/srooms leave &8• &fsalir &8| &7/srooms stats &8• &fstats &8| &7/srooms top elo &8• &franking");
+            previousDefaults.put("help-admin-two", "&7/srooms kit save <room> &8• &fguardar kit &8| &7/srooms setexit &8• &fsalida &8| &7/srooms reset <room> &8• &freiniciar &8| &7/srooms check <room> &8• &fcomprobar &8| &7/srooms reload &8• &frecargar");
+            previousDefaults.put("room-info", "&b%room% &8» &7%players%/2 &8| &7%status% &8| &7Keep: &f%keep% &8| &7Reabre: &f%seconds%s &8| &7Límite: &f%duration%s &8| &7Ranked: &f%ranked% &8| &7Kit: &f%kit%");
+            previousDefaults.put("stats-line", "&aVictorias: &f%wins% &8| &cDerrotas: &f%losses% &8| &eEmpates: &f%draws% &8| &6ELO: &f%elo% &8| &eRacha: &f%streak% &8| &7Mejor: &f%best% &8| &bWinrate: &f%rate%%");
+            previousDefaults.put("room-check-ok", "&aLa room &f%room% &apasó las comprobaciones: región y cristal (spawns solo si hay TP).");
+            previousDefaults.put("room-spawns-invalid", "&cLa room &f%room% &cno tiene dos spawns válidos y separados. &7Configúralos en &f/srooms roomconfig %room%&7.");
+            for (Map.Entry<String, String> entry : previousDefaults.entrySet()) {
+                if (entry.getValue().equals(messages.getString(entry.getKey())))
+                    messages.set(entry.getKey(), newDefaults.getString(entry.getKey()));
+            }
+            for (String removed : new String[]{
+                    "usage-kit", "kit-saved", "kit-cleared", "kit-info",
+                    "kit-missing", "kit-save-failed", "kit-apply-failed",
+                    "kit-containers-blocked", "top-elo-title", "top-elo-entry",
+                    "room-spawns-needed", "room-walk-in"}) {
+                messages.set(removed, null);
             }
             messages.setDefaults(newDefaults);
             messages.options().copyDefaults(true);

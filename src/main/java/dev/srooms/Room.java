@@ -27,7 +27,6 @@ public final class Room {
     // Legacy rooms retain the old two regions internally without expanding
     // their bounds or changing saved arena coordinates.
     private final Cuboid region, legacyA, legacyB, gate;
-    private Location spawnA, spawnB;
     private boolean keepInventory = false;
     private boolean keepExperience = false;
     private boolean allowBuild = false;
@@ -45,8 +44,6 @@ public final class Room {
     private boolean freezeCountdown = false;
     private boolean enabled = true;
     private boolean rewardWinner = false;
-    private boolean kitEnabled = false;
-    private boolean ranked = false;
     private String barrierMaterial = "GLASS";
     private final Map<String, Integer> effectLevels = new LinkedHashMap<>();
 
@@ -113,12 +110,10 @@ public final class Room {
         return validSpawn(position) ? position : null;
     }
 
-    public Location spawnA() { return spawnA != null ? spawnA.clone() : automaticSpawn(true); }
-    public Location spawnB() { return spawnB != null ? spawnB.clone() : automaticSpawn(false); }
-    public Location configuredSpawnA() { return spawnA == null ? null : spawnA.clone(); }
-    public Location configuredSpawnB() { return spawnB == null ? null : spawnB.clone(); }
-    public void spawnA(Location value) { spawnA = value == null ? null : value.clone(); }
-    public void spawnB(Location value) { spawnB = value == null ? null : value.clone(); }
+    // Spawns are automatic and only used by the optional teleport toggle.
+    // Arena owners never need to set player 1/2 locations manually.
+    public Location spawnA() { return automaticSpawn(true); }
+    public Location spawnB() { return automaticSpawn(false); }
 
     public boolean keepInventory() { return keepInventory; }
     public void keepInventory(boolean value) { keepInventory = value; }
@@ -152,10 +147,6 @@ public final class Room {
     public void freezeCountdown(boolean value) { freezeCountdown = value; }
     public boolean enabled() { return enabled; }
     public void enabled(boolean value) { enabled = value; }
-    public boolean ranked() { return ranked; }
-    public void ranked(boolean value) { ranked = value; }
-    public boolean kitEnabled() { return kitEnabled; }
-    public void kitEnabled(boolean value) { kitEnabled = value; }
     public boolean rewardWinner() { return rewardWinner; }
     public void rewardWinner(boolean value) { rewardWinner = value; }
     public String barrierMaterial() { return barrierMaterial; }

@@ -28,8 +28,8 @@ class RoomDefaultsTest {
         assertFalse(room.blockEnderPearls());
         assertFalse(room.freezeCountdown());
         assertFalse(room.rewardWinner());
-        assertFalse(room.kitEnabled());
-        assertFalse(room.ranked());
+        // Kits and Ranked are not part of the Room API anymore.
+        assertFalse(room.teleportOnJoin());
         assertTrue(room.effects().isEmpty());
         assertEquals(0, room.reopenDelay());
     }

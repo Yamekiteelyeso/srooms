@@ -77,29 +77,8 @@ public final class GameListener implements Listener {
     @EventHandler(ignoreCancelled = true)
     public void onDrop(PlayerDropItemEvent event) {
         Room room = plugin.duels().playerRoom(event.getPlayer());
-        if (plugin.selections().isTool(event.getItemDrop().getItemStack())
-                || room != null && room.kitEnabled()) event.setCancelled(true);
-    }
-
-    @EventHandler(ignoreCancelled = true)
-    public void onPickup(EntityPickupItemEvent event) {
-        if (event.getEntity() instanceof Player player) {
-            Room room = plugin.duels().playerRoom(player);
-            if (room != null && room.kitEnabled()) event.setCancelled(true);
-        }
-    }
-
-    @EventHandler(ignoreCancelled = true)
-    public void onOpen(InventoryOpenEvent event) {
-        if (!(event.getPlayer() instanceof Player player)) return;
-        Room room = plugin.duels().playerRoom(player);
-        if (room != null && room.kitEnabled()
-                && plugin.getConfig().getBoolean("kits.block-containers", true)
-                && event.getInventory().getType() != InventoryType.CRAFTING
-                && event.getInventory().getType() != InventoryType.PLAYER) {
+        if (plugin.selections().isTool(event.getItemDrop().getItemStack()))
             event.setCancelled(true);
-            plugin.msg(player, "kit-containers-blocked");
-        }
     }
 
     @EventHandler(ignoreCancelled = true)
