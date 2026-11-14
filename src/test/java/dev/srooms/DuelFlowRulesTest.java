@@ -20,6 +20,7 @@ class DuelFlowRulesTest {
     @Test void optionalTeleportDefaultsOff() {
         Room room = new Room("pvp", null, null);
         assertFalse(room.teleportOnJoin());
+        assertFalse(room.openCrystalOnFight());
         assertEquals(0, room.countdown());
         room.teleportOnJoin(true);
         assertTrue(room.teleportOnJoin());
