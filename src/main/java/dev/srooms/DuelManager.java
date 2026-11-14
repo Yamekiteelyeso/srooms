@@ -214,11 +214,17 @@ public final class DuelManager {
             plugin.msg(player, "room-busy", "room", room.name());
             return;
         }
-        Location spawn = match == null ? room.spawnA() : room.spawnB();
-        if (spawn == null || spawn.getWorld() == null || !room.contains(spawn) || room.gate().contains(spawn)) {
-            plugin.msg(player, "selection-invalid", "reason", "Spawn inválido. Configúralo con /srooms roomconfig.");
+        // Validate both slots before accepting player #1: otherwise a room
+        // could trap someone waiting forever for an unusable second spawn.
+        Location firstSpawn = room.spawnA();
+        Location secondSpawn = room.spawnB();
+        if (!room.validSpawn(firstSpawn) || !room.validSpawn(secondSpawn)
+                || firstSpawn.getWorld() == secondSpawn.getWorld()
+                && firstSpawn.distanceSquared(secondSpawn) < 1.0) {
+            plugin.msg(player, "room-spawns-invalid", "room", room.name());
             return;
         }
+        Location spawn = match == null ? firstSpawn : secondSpawn;
         if (match == null) {
             if (plugin.rooms().hasTileEntities(room)) {
                 plugin.msg(player, "gate-unsafe");
