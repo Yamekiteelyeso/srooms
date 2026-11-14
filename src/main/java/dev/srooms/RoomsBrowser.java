@@ -69,7 +69,7 @@ public final class RoomsBrowser implements Listener {
                     "&7Duración: &f" + room.duelDuration() + " segundos",
                     "&7Entrada: &aCaminando",
                     "&7Equipamiento: &fEl que lleves puesto",
-                    available ? "&aClic para entrar" : "&cNo disponible"));
+                    available ? "&7Entra caminando a la room" : "&cNo disponible"));
         }
 
         if (page > 0)
@@ -94,7 +94,7 @@ public final class RoomsBrowser implements Listener {
         Room room = plugin.rooms().get(holder.names.get(slot));
         if (room == null) { open(player, holder.page); return; }
         player.closeInventory();
-        plugin.duels().join(player, room);
+        plugin.msg(player, "room-enter-walking", "room", room.name());
     }
 
     @EventHandler
