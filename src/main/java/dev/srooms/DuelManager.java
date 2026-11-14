@@ -87,6 +87,8 @@ public final class DuelManager {
     private final Map<String, Long> reopeningAt = new HashMap<>();
     private final Map<String, BukkitTask> reopeningTasks = new HashMap<>();
     private final Set<UUID> joining = new HashSet<>();
+    // Physical rooms should not requeue players until they actually exit.
+    private final Set<UUID> reentryRequired = new HashSet<>();
     private final File recoveryFile;
 
     public DuelManager(SRoomsPlugin plugin) {
@@ -184,6 +186,14 @@ public final class DuelManager {
         Match match = players.get(player.getUniqueId());
         return match != null && match.phase == Phase.COUNTDOWN;
     }
+    public boolean needsReentry(Player player) {
+        return reentryRequired.contains(player.getUniqueId());
+    }
+
+    public void allowReentry(Player player) {
+        reentryRequired.remove(player.getUniqueId());
+    }
+
     public boolean isFighting(Player player) {
         Match match = players.get(player.getUniqueId());
         return match != null && match.phase == Phase.FIGHT;
@@ -202,6 +212,10 @@ public final class DuelManager {
     public void join(Player player, Room room, Location enteredAt) {
         if (!room.enabled()) { plugin.msg(player, "room-disabled", "room", room.name()); return; }
         if (isPlaying(player)) { plugin.msg(player, "already-in-room"); return; }
+        if (needsReentry(player)) {
+            plugin.msg(player, "room-reenter", "room", room.name());
+            return;
+        }
         if (plugin.kits().pending(player)) {
             plugin.msg(player, "kit-recovery-pending");
             return;
@@ -726,6 +740,7 @@ public final class DuelManager {
             players.remove(id);
             Snapshot snapshot = snapshots.remove(id);
             if (snapshot == null) continue;
+            if (!snapshot.restoreLocation) reentryRequired.add(id);
             if (died && id.equals(loser)) {
                 pendingRespawns.put(id, snapshot);
                 continue;
@@ -804,6 +819,7 @@ public final class DuelManager {
     }
 
     public void shutdown() {
+        reentryRequired.clear();
         for (BukkitTask task : reopeningTasks.values()) task.cancel();
         reopeningTasks.clear();
         reopeningAt.clear();
