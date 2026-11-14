@@ -38,14 +38,16 @@ public final class DuelManager {
     public enum Phase { WAITING, COUNTDOWN, FIGHT }
     private static final class Snapshot {
         final Location location;
+        final boolean restoreLocation;
         final double health;
         final int food, fireTicks;
         final GameMode gameMode;
         final boolean allowFlight, flying;
         final float saturation, exhaustion;
         final Collection<PotionEffect> potions;
-        Snapshot(Player player, Location safeReturn) {
+        Snapshot(Player player, Location safeReturn, boolean restoreLocation) {
             location = safeReturn.clone();
+            this.restoreLocation = restoreLocation;
             gameMode = player.getGameMode();
             allowFlight = player.getAllowFlight();
             flying = player.isFlying();
@@ -193,6 +195,11 @@ public final class DuelManager {
     }
 
     public void join(Player player, Room room) {
+        join(player, room, player.getLocation());
+    }
+
+    /** Pass the destination from PlayerMoveEvent: the entity has not moved there yet. */
+    public void join(Player player, Room room, Location enteredAt) {
         if (!room.enabled()) { plugin.msg(player, "room-disabled", "room", room.name()); return; }
         if (isPlaying(player)) { plugin.msg(player, "already-in-room"); return; }
         if (plugin.kits().pending(player)) {
@@ -214,17 +221,21 @@ public final class DuelManager {
             plugin.msg(player, "room-busy", "room", room.name());
             return;
         }
-        // Validate both slots before accepting player #1: otherwise a room
-        // could trap someone waiting forever for an unusable second spawn.
-        Location firstSpawn = room.spawnA();
-        Location secondSpawn = room.spawnB();
-        if (!room.validSpawn(firstSpawn) || !room.validSpawn(secondSpawn)
-                || firstSpawn.getWorld() == secondSpawn.getWorld()
-                && firstSpawn.distanceSquared(secondSpawn) < 1.0) {
-            plugin.msg(player, "room-spawns-invalid", "room", room.name());
+        Location spawn = null;
+        if (room.teleportOnJoin()) {
+            Location firstSpawn = room.spawnA();
+            Location secondSpawn = room.spawnB();
+            if (!room.validSpawn(firstSpawn) || !room.validSpawn(secondSpawn)
+                    || firstSpawn.getWorld() == secondSpawn.getWorld()
+                    && firstSpawn.distanceSquared(secondSpawn) < 1.0) {
+                plugin.msg(player, "room-spawns-invalid", "room", room.name());
+                return;
+            }
+            spawn = match == null ? firstSpawn : secondSpawn;
+        } else if (!room.validSpawn(enteredAt)) {
+            plugin.msg(player, "room-walk-in", "room", room.name());
             return;
         }
-        Location spawn = match == null ? firstSpawn : secondSpawn;
         // When someone was already inside a room (e.g. after a restart),
         // returning them there would immediately autojoin them again.
         Location safeReturn = player.getLocation().clone();
@@ -241,28 +252,24 @@ public final class DuelManager {
                 plugin.msg(player, "gate-unsafe");
                 return;
             }
-            if (!closeGate(room)) {
-                plugin.msg(player, "selection-invalid", "reason", "No se pudo guardar la barrera. Comprueba el disco.");
-                return;
-            }
             match = new Match(room, player);
             matches.put(key, match);
         }
-        Snapshot beforeTeleport = new Snapshot(player, safeReturn);
-        joining.add(player.getUniqueId());
-        boolean teleported;
-        try {
-            teleported = player.teleport(spawn);
-        } finally {
-            joining.remove(player.getUniqueId());
-        }
-        if (!teleported) {
-            if (match.second == null && !players.containsKey(match.first)) {
-                matches.remove(key);
-                restoreGate(room);
+        Snapshot beforeTeleport = new Snapshot(player, safeReturn, room.teleportOnJoin());
+        if (spawn != null) {
+            joining.add(player.getUniqueId());
+            boolean teleported;
+            try {
+                teleported = player.teleport(spawn);
+            } finally {
+                joining.remove(player.getUniqueId());
             }
-            plugin.msg(player, "selection-invalid", "reason", "No fue posible teletransportarte al spawn.");
-            return;
+            if (!teleported) {
+                if (match.second == null && !players.containsKey(match.first))
+                    matches.remove(key);
+                plugin.msg(player, "selection-invalid", "reason", "No fue posible teletransportarte al spawn.");
+                return;
+            }
         }
         boolean kitApplied;
         try {
@@ -273,10 +280,9 @@ public final class DuelManager {
             kitApplied = false;
         }
         if (!kitApplied) {
-            player.teleport(beforeTeleport.location);
+            if (spawn != null) player.teleport(beforeTeleport.location);
             if (match.first.equals(player.getUniqueId()) && !players.containsKey(match.first)) {
                 matches.remove(key);
-                restoreGate(room);
             }
             plugin.msg(player, "kit-apply-failed");
             return;
@@ -308,7 +314,7 @@ public final class DuelManager {
                         "players", "2", "max", "2");
                 announceOpponent(first, room, player.getName());
             }
-            startCountdown(match);
+            startDuel(match);
         }
     }
 
@@ -362,8 +368,57 @@ public final class DuelManager {
         }, seconds * 20L);
     }
 
-    private void startCountdown(Match match) {
+    private void startDuel(Match match) {
         if (match.waitingTask != null) match.waitingTask.cancel();
+        // No glass when only one participant is present. Wait one tick so
+        // PlayerMoveEvent applies the second player's final destination.
+        boolean instant = match.room.countdown() == 0;
+        match.phase = instant ? Phase.FIGHT : Phase.COUNTDOWN;
+        if (instant) announceFight(match);
+        Bukkit.getScheduler().runTask(plugin, () -> {
+            if (matches.get(roomKey(match.room)) != match) return;
+            Player first = Bukkit.getPlayer(match.first);
+            Player second = Bukkit.getPlayer(match.second);
+            if (first == null || second == null || !match.room.contains(first.getLocation())
+                    || !match.room.contains(second.getLocation())) {
+                finish(match, null, false);
+                return;
+            }
+            if (!closeGate(match.room)) {
+                plugin.getLogger().warning("No se pudo colocar el cristal en " + match.room.name());
+                // Fight can proceed even if writing recovery failed; never
+                // corrupt world blocks without saving their originals.
+                if (!instant) announceFight(match);
+                return;
+            }
+            if (instant) {
+                // With instant PvP the glass is only a brief visual signal:
+                // players can fight immediately, without a forced countdown.
+                Bukkit.getScheduler().runTaskLater(plugin, () -> {
+                    if (matches.get(roomKey(match.room)) == match) openGate(match.room);
+                }, 1L);
+            } else startCountdown(match);
+        });
+    }
+
+    private void announceFight(Match match) {
+        match.phase = Phase.FIGHT;
+        startCombatTimer(match);
+        Player first = Bukkit.getPlayer(match.first);
+        Player second = Bukkit.getPlayer(match.second);
+        if (first != null) {
+            plugin.msg(first, "duel-start");
+            plugin.playSound(first, "start");
+            first.sendTitle(plugin.raw("duel-start-title"), "", 0, 25, 5);
+        }
+        if (second != null) {
+            plugin.msg(second, "duel-start");
+            plugin.playSound(second, "start");
+            second.sendTitle(plugin.raw("duel-start-title"), "", 0, 25, 5);
+        }
+    }
+
+    private void startCountdown(Match match) {
         match.phase = Phase.COUNTDOWN;
         match.countdownTask = new BukkitRunnable() {
             int remaining = match.room.countdown();
@@ -379,15 +434,8 @@ public final class DuelManager {
                     return;
                 }
                 if (remaining == 0) {
-                    match.phase = Phase.FIGHT;
                     openGate(match.room);
-                    startCombatTimer(match);
-                    plugin.msg(a, "duel-start");
-                    plugin.msg(b, "duel-start");
-                    plugin.playSound(a, "start");
-                    plugin.playSound(b, "start");
-                    a.sendTitle(SRoomsPlugin.color("&a&l¡PELEA!"), "", 0, 30, 10);
-                    b.sendTitle(SRoomsPlugin.color("&a&l¡PELEA!"), "", 0, 30, 10);
+                    announceFight(match);
                     cancel();
                     return;
                 }
@@ -486,7 +534,9 @@ public final class DuelManager {
             return;
         }
         String key = roomKey(room);
-        sealGateForReopen(room);
+        // No crystal during cooldown: it is only placed once two players
+        // have entered a room for an actual duel.
+        restoreGate(room);
         reopeningAt.put(key, System.currentTimeMillis() + seconds * 1000L);
         if (plugin.getConfig().getBoolean("announcements.broadcast-ready", true))
             plugin.broadcast("room-cooldown", "room", room.name(), "seconds", String.valueOf(seconds));
@@ -682,7 +732,7 @@ public final class DuelManager {
             }
             Player online = Bukkit.getPlayer(id);
             if (online != null) {
-                restorePlayer(online, snapshot, true);
+                restorePlayer(online, snapshot, snapshot.restoreLocation);
                 if (plugin.kits().pending(online)) {
                     if (!plugin.kits().restore(online, false))
                         plugin.msg(online, "kit-recovery-pending");
@@ -713,7 +763,7 @@ public final class DuelManager {
     public void handleRespawn(PlayerRespawnEvent event) {
         Snapshot snapshot = pendingRespawns.remove(event.getPlayer().getUniqueId());
         if (snapshot == null) return;
-        event.setRespawnLocation(snapshot.location);
+        if (snapshot.restoreLocation) event.setRespawnLocation(snapshot.location);
         Bukkit.getScheduler().runTask(plugin, () -> {
             if (event.getPlayer().isOnline()) {
                 restorePlayer(event.getPlayer(), snapshot, false);
