@@ -386,15 +386,17 @@ public final class DuelManager {
         if (match.waitingTask != null) match.waitingTask.cancel();
         // No glass when only one participant is present. Wait one tick so
         // PlayerMoveEvent applies the second player's final destination.
-        boolean instant = match.room.countdown() == 0;
+        boolean instant = DuelFlowRules.startImmediately(match.room.countdown());
         match.phase = instant ? Phase.FIGHT : Phase.COUNTDOWN;
         if (instant) announceFight(match);
         Bukkit.getScheduler().runTask(plugin, () -> {
             if (matches.get(roomKey(match.room)) != match) return;
             Player first = Bukkit.getPlayer(match.first);
             Player second = Bukkit.getPlayer(match.second);
-            if (first == null || second == null || !match.room.contains(first.getLocation())
-                    || !match.room.contains(second.getLocation())) {
+            if (first == null || second == null || !DuelFlowRules.shouldPlaceCrystal(
+                    match.second == null ? 1 : 2,
+                    match.room.contains(first.getLocation()),
+                    match.room.contains(second.getLocation()))) {
                 // A failed movement/teleport is a cancellation, not a draw.
                 match.phase = Phase.WAITING;
                 finish(match, null, false);
