@@ -44,6 +44,12 @@ public final class SRoomsPlugin extends JavaPlugin {
             getConfig().set("defaults.reopen-delay-seconds", 0);
             getConfig().set("migration.defaults-1-3-3", true);
         }
+        // Clean up removed feature switches from servers upgraded from
+        // older SRooms versions. Historical inventory recovery is untouched.
+        getConfig().set("defaults.kit-enabled", null);
+        getConfig().set("defaults.ranked", null);
+        getConfig().set("ranked", null);
+        getConfig().set("kits", null);
         saveConfig();
         File messagesFile = new File(getDataFolder(), "messages.yml");
         if (!messagesFile.exists()) saveResource("messages.yml", false);
