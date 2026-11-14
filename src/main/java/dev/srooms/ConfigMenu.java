@@ -76,6 +76,8 @@ public final class ConfigMenu implements Listener {
         toggle(menu, 17, Material.PAPER, "Bloquear comandos", room.blockCommands(), "Desactiva comandos durante el duelo");
         toggle(menu, 18, Material.ENDER_EYE, "Teletransporte al entrar", room.teleportOnJoin(),
                 "OFF: luchar donde entras caminando / ON: mover a los spawns");
+        toggle(menu, 26, Material.GLASS_PANE, "Abrir cristal al pelear", room.openCrystalOnFight(),
+                "OFF: cerrar entrada hasta terminar / ON: abrir al empezar");
         toggle(menu, 27, Material.ENDER_PEARL, "Bloquear teletransporte", room.blockEnderPearls(), "Impide ender pearls y chorus fruit");
         toggle(menu, 28, Material.ICE, "Congelar inicio", room.freezeCountdown(), "Impide moverse en la cuenta atrás");
         toggle(menu, 30, Material.LEVER, "Room habilitada", room.enabled(), "Activa o desactiva nuevos combates");
@@ -155,6 +157,7 @@ public final class ConfigMenu implements Listener {
             case 16 -> changed = false; // Entry is the core mechanic, not a room modifier.
             case 17 -> room.blockCommands(!room.blockCommands());
             case 18 -> room.teleportOnJoin(!room.teleportOnJoin());
+            case 26 -> room.openCrystalOnFight(!room.openCrystalOnFight());
             case 27 -> room.blockEnderPearls(!room.blockEnderPearls());
             case 28 -> room.freezeCountdown(!room.freezeCountdown());
             case 30 -> room.enabled(!room.enabled());
