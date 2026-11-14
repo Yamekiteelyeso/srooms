@@ -15,7 +15,7 @@ Entra **caminando** a la región seleccionada de la room y pelea **en tu posici�
 3. **Cuenta regresiva 0 segundos por defecto:** el combate se activa inmediatamente y el cristal **permanece puesto hasta terminar la pelea**, para cerrar la entrada y evitar que entren terceros. Si utilizas el cristal como **separador entre ambos jugadores**, activa **Abrir cristal al pelear** en `/srooms roomconfig <room>`, y se retirará al comenzar el combate (en modo instantáneo, un tick después de aparecer).
 4. Al acabar, se restauran los bloques originales del cristal. Durante el tiempo de espera de un solo jugador y la reapertura **no se generan barreras nuevas**.
 
-**Prevención de bucles:** sin TP, los participantes que terminaron un duelo deben salir de la room y volver a entrar para inscribirse otra vez. Al esperar rival puedes salir caminando. Los spawns son **opcionales** cuando el teletransporte está apagado.
+**Prevención de bucles:** sin TP, los participantes que terminaron un duelo deben salir de la room y volver a entrar para inscribirse otra vez. **No entra nadie nuevo mientras quede un participante anterior dentro**; así tampoco se teletransporta al ganador para permitir el siguiente combate. Al esperar rival puedes salir caminando. Los spawns son **opcionales** cuando el teletransporte está apagado.
 
 **Compatibilidad con salas anteriores:** las rooms guardadas con la cuenta regresiva original de 5 segundos se migran a 0 una sola vez, salvo si ya usan el nuevo marcador de configuración. Los tiempos personalizados diferentes de 5 se conservan. El TP es opt-in incluso para salas antiguas; las rooms anteriores siguen guardadas.
 
