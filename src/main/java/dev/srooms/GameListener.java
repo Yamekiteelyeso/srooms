@@ -288,7 +288,13 @@ public final class GameListener implements Listener {
                         event.setTo(player.getLocation());
                     else event.setTo(event.getFrom());
                 } else {
-                    event.setTo(event.getFrom());
+                    // Block people crossing the border, but eject guests who
+                    // were already inside (do not freeze them in place).
+                    if (crossedBoundary) event.setTo(event.getFrom());
+                    else {
+                        Location exit = plugin.duels().exitLocation(entered);
+                        event.setTo(exit != null ? exit : event.getFrom());
+                    }
                     warnIntruder(player, entered);
                 }
                 return;
