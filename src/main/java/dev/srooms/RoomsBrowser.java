@@ -67,8 +67,8 @@ public final class RoomsBrowser implements Listener {
                     "&7Jugadores: &f" + size + "/2",
                     "&7Estado: &f" + plugin.duels().state(room),
                     "&7Duración: &f" + room.duelDuration() + " segundos",
-                    "&7Modo: " + (room.ranked() ? "&6Ranked" : "&fCasual"),
-                    "&7Equipamiento: " + (room.kitEnabled() ? "&bKit de arena" : "&fPropio"),
+                    "&7Entrada: &aCaminando",
+                    "&7Equipamiento: &fEl que lleves puesto",
                     available ? "&aClic para entrar" : "&cNo disponible"));
         }
 
