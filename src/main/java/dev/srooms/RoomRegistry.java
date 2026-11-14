@@ -113,7 +113,12 @@ public final class RoomRegistry {
                 Cuboid gate = Cuboid.read(s.getConfigurationSection("gate"));
                 Room room;
                 if (s.isConfigurationSection("region")) {
-                    room = new Room(key, Cuboid.read(s.getConfigurationSection("region")), gate);
+                    Cuboid region = Cuboid.read(s.getConfigurationSection("region"));
+                    // Fix rooms previously created using two ground-level
+                    // corners (height 1). Otherwise walking never enters them.
+                    region = region.withMinimumArenaHeight(
+                            plugin.getConfig().getInt("selection.minimum-room-height", 12));
+                    room = new Room(key, region, gate);
                 } else {
                     // Read-only backwards compatibility: keep old A/B geometry exactly.
                     room = new Room(key, Cuboid.read(s.getConfigurationSection("a")),
