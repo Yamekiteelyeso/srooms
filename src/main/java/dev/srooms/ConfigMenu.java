@@ -69,7 +69,10 @@ public final class ConfigMenu implements Listener {
         toggle(menu, 13, Material.COOKED_BEEF, "Hambre congelada", room.lockHunger(), "No perder puntos de hambre");
         toggle(menu, 14, Material.GOLDEN_APPLE, "Curar al entrar", room.healOnJoin(), "Restaura salud y comida al empezar");
         toggle(menu, 15, Material.MILK_BUCKET, "Limpiar efectos", room.clearEffects(), "Quitar pociones anteriores mientras peleas");
-        toggle(menu, 16, Material.OAK_DOOR, "Entrada automática", room.walkIn(), "Entrar caminando a la región");
+        menu.setItem(16, item(Material.OAK_DOOR, "&aEntrada caminando",
+                "&7Los jugadores se unen automáticamente al",
+                "&7entrar en la región de la room.",
+                "&aSiempre activado (no necesita comando)"));
         toggle(menu, 17, Material.PAPER, "Bloquear comandos", room.blockCommands(), "Desactiva comandos durante el duelo");
         toggle(menu, 27, Material.ENDER_PEARL, "Bloquear teletransporte", room.blockEnderPearls(), "Impide ender pearls y chorus fruit");
         toggle(menu, 28, Material.ICE, "Congelar inicio", room.freezeCountdown(), "Impide moverse en la cuenta atrás");
@@ -147,7 +150,7 @@ public final class ConfigMenu implements Listener {
             case 13 -> room.lockHunger(!room.lockHunger());
             case 14 -> room.healOnJoin(!room.healOnJoin());
             case 15 -> room.clearEffects(!room.clearEffects());
-            case 16 -> room.walkIn(!room.walkIn());
+            case 16 -> changed = false; // Entry is the core mechanic, not a room modifier.
             case 17 -> room.blockCommands(!room.blockCommands());
             case 27 -> room.blockEnderPearls(!room.blockEnderPearls());
             case 28 -> room.freezeCountdown(!room.freezeCountdown());

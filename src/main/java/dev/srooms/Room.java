@@ -28,19 +28,19 @@ public final class Room {
     // their bounds or changing saved arena coordinates.
     private final Cuboid region, legacyA, legacyB, gate;
     private Location spawnA, spawnB;
-    private boolean keepInventory = true;
-    private boolean keepExperience = true;
+    private boolean keepInventory = false;
+    private boolean keepExperience = false;
     private boolean allowBuild = false;
     private boolean lockHunger = false;
-    private boolean healOnJoin = true;
-    private boolean clearEffects = true;
+    private boolean healOnJoin = false;
+    private boolean clearEffects = false;
     private int countdown = 5;
-    private int reopenDelay = 10;
+    private int reopenDelay = 0;
     private int duelDuration = 300;
-    private boolean walkIn = false;
-    private boolean blockCommands = true;
-    private boolean blockEnderPearls = true;
-    private boolean freezeCountdown = true;
+    private boolean walkIn = true;
+    private boolean blockCommands = false;
+    private boolean blockEnderPearls = false;
+    private boolean freezeCountdown = false;
     private boolean enabled = true;
     private boolean rewardWinner = false;
     private boolean kitEnabled = false;

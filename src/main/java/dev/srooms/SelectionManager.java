@@ -184,6 +184,15 @@ public final class SelectionManager {
         draft.clicks.nextStage(System.nanoTime());
         switch (draft.stage) {
             case ROOM -> {
+                // Players normally click two FLOOR blocks; a 1-block-tall
+                // room has no space for a player's feet and cannot autojoin.
+                cube = cube.withMinimumArenaHeight(
+                        plugin.getConfig().getInt("selection.minimum-room-height", 12));
+                if (cube.volume() > plugin.getConfig().getLong("selection.max-zone-volume", 250000)) {
+                    plugin.msg(player, "selection-invalid", "reason",
+                            "La room excede el volumen permitido tras ajustar su altura.");
+                    return;
+                }
                 draft.room = cube;
                 draft.stage = Stage.GATE;
                 removeTools(player);

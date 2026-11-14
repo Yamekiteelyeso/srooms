@@ -257,17 +257,48 @@ public final class GameListener implements Listener {
                 && event.getFrom().getWorld() == event.getTo().getWorld()) return;
         Room participating = plugin.duels().playerRoom(player);
         if (participating != null) {
-            if (!participating.contains(event.getTo())) event.setTo(event.getFrom());
+            if (!participating.contains(event.getTo())) {
+                // Waiting players can walk back out; during countdown and
+                // combat the arena remains closed to avoid invalid results.
+                if (plugin.getConfig().getBoolean("access.walk-out-while-waiting", true)
+                        && !plugin.duels().isCountingDown(player)
+                        && !plugin.duels().isFighting(player)) {
+                    plugin.duels().leave(player, false);
+                    event.setTo(player.getLocation());
+                } else event.setTo(event.getFrom());
+            }
             return;
         }
         Room entered = plugin.rooms().at(event.getTo());
-        if (entered != null && !entered.contains(event.getFrom())
-                && entered.walkIn() && !plugin.selections().isSelecting(player)
-                && player.hasPermission("srooms.use")) {
-            plugin.duels().join(player, entered);
-            if (plugin.duels().playerRoom(player) == entered) event.setTo(player.getLocation());
-            else event.setTo(event.getFrom());
-            return;
+        if (entered != null && !plugin.selections().isSelecting(player)) {
+            boolean crossedBoundary = !entered.contains(event.getFrom());
+            // Staff can crouch to inspect/setup an idle arena without joining.
+            boolean editing = player.hasPermission("srooms.admin") && player.isSneaking();
+            // Guests who were already inside a room when it was configured
+            // or reloaded can join by moving, without leaving and re-entering.
+            boolean entryMovement = crossedBoundary || !player.hasPermission("srooms.admin");
+            if (entryMovement && !editing) {
+                // Walking inside is always the way to join (even when older
+                // rooms.yml files had walk-in=false).
+                if (entered.enabled() && player.hasPermission("srooms.use")
+                        && plugin.duels().participants(entered) < 2
+                        && plugin.duels().reopenRemaining(entered) == 0) {
+                    plugin.duels().join(player, entered);
+                    if (plugin.duels().playerRoom(player) == entered)
+                        event.setTo(player.getLocation());
+                    else event.setTo(event.getFrom());
+                } else {
+                    // Block people crossing the border, but eject guests who
+                    // were already inside (do not freeze them in place).
+                    if (crossedBoundary) event.setTo(event.getFrom());
+                    else {
+                        Location exit = plugin.duels().exitLocation(entered);
+                        event.setTo(exit != null ? exit : event.getFrom());
+                    }
+                    warnIntruder(player, entered);
+                }
+                return;
+            }
         }
         if (shouldDenyEntry(player, entered)) {
             if (entered.contains(event.getFrom())) {

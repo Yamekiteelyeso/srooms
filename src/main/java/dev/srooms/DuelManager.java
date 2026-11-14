@@ -44,8 +44,8 @@ public final class DuelManager {
         final boolean allowFlight, flying;
         final float saturation, exhaustion;
         final Collection<PotionEffect> potions;
-        Snapshot(Player player) {
-            location = player.getLocation().clone();
+        Snapshot(Player player, Location safeReturn) {
+            location = safeReturn.clone();
             gameMode = player.getGameMode();
             allowFlight = player.getAllowFlight();
             flying = player.isFlying();
@@ -225,6 +225,17 @@ public final class DuelManager {
             return;
         }
         Location spawn = match == null ? firstSpawn : secondSpawn;
+        // When someone was already inside a room (e.g. after a restart),
+        // returning them there would immediately autojoin them again.
+        Location safeReturn = player.getLocation().clone();
+        if (room.contains(safeReturn)) {
+            safeReturn = exitLocation(room);
+            if (safeReturn == null || room.contains(safeReturn)) {
+                plugin.msg(player, "selection-invalid", "reason",
+                        "No se pudo encontrar una salida segura fuera de la room.");
+                return;
+            }
+        }
         if (match == null) {
             if (plugin.rooms().hasTileEntities(room)) {
                 plugin.msg(player, "gate-unsafe");
@@ -237,7 +248,7 @@ public final class DuelManager {
             match = new Match(room, player);
             matches.put(key, match);
         }
-        Snapshot beforeTeleport = new Snapshot(player);
+        Snapshot beforeTeleport = new Snapshot(player, safeReturn);
         joining.add(player.getUniqueId());
         boolean teleported;
         try {
