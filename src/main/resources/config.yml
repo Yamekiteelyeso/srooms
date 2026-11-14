@@ -1,5 +1,5 @@
 # ================================================================
-# SRooms 1.3.2 | Paper 1.20.1 | Java 17
+# SRooms 1.3.3 | Paper 1.20.1 | Java 17
 # Todas las arenas son 1v1. Los ajustes de cada arena se guardan
 # en rooms.yml y pueden modificarse desde /srooms roomconfig <room>.
 # ================================================================
@@ -10,11 +10,12 @@ protection:
   # no se reembolsan a sus propietarios.
   max-edited-blocks: 4096
 
-# Las arenas (incluso vacías) pueden rechazar visitantes que no
-# se unieron a un 1v1. Administradores pueden entrar a salas libres.
-# Si walk-in está activo, un jugador con srooms.use puede entrar andando.
+# La entrada es caminando, SIN comandos, para rooms nuevas y antiguas.
+# Los administradores pueden entrar agachados para configurarlas sin competir.
 access:
   protect-empty-rooms: true
+  # Salir caminando de una room mientras se espera rival.
+  walk-out-while-waiting: true
   # Usa /srooms setexit para definir un punto seguro fuera de las rooms.
   # exit-spawn: (se guarda automáticamente al ejecutar /srooms setexit)
 
@@ -23,18 +24,34 @@ selection:
   # 0 = desactivar cada espera; rangos permitidos 0..1000 / 0..2000 ms.
   min-click-interval-ms: 80
   stage-cooldown-ms: 160
+  # Las regiones planas (dos clics sobre el suelo) crecen hacia arriba.
+  # Así el jugador puede entrar físicamente, aunque los puntos tengan la misma Y.
+  minimum-room-height: 12
   # Protege contra selecciones enormes que puedan generar lag.
   max-zone-volume: 250000
   max-gate-volume: 4096
 
-# Opciones predeterminadas para arenas NUEVAS (las existentes
-# conservan sus propios ajustes en rooms.yml).
+# Opciones para arenas NUEVAS. Todas las funciones opcionales se
+# inician APAGADAS. La room en sí queda habilitada y el acceso andando
+# siempre funciona (no requiere comandos ni activar walk-in).
+# Las rooms anteriores conservan sus opciones, salvo que el acceso
+# caminando también queda activo al actualizar.
 defaults:
-  walk-in: false                   # true = entrar caminando a la región
-  block-commands: true             # bloquear comandos durante la partida
-  block-ender-pearls: true         # evita escapes por perlas/chorus
-  freeze-countdown: true           # no permite moverse antes de PELEA
-  duel-duration-seconds: 300       # 30..1800 (5 minutos por defecto)
+  walk-in: true                    # solo compatibilidad: la entrada siempre es andando
+  keep-inventory: false
+  keep-experience: false
+  allow-build: false
+  lock-hunger: false
+  heal-on-join: false
+  clear-effects: false
+  block-commands: false
+  block-ender-pearls: false
+  freeze-countdown: false
+  kit-enabled: false
+  reward-winner: false
+  ranked: false
+  reopen-delay-seconds: 0          # sin cooldown de reapertura
+  duel-duration-seconds: 300       # duración técnica: 5 minutos
 
 duel:
   # Da 2 segundos para leer "Rival encontrado" antes del countdown.
