@@ -257,7 +257,16 @@ public final class GameListener implements Listener {
                 && event.getFrom().getWorld() == event.getTo().getWorld()) return;
         Room participating = plugin.duels().playerRoom(player);
         if (participating != null) {
-            if (!participating.contains(event.getTo())) event.setTo(event.getFrom());
+            if (!participating.contains(event.getTo())) {
+                // Waiting players can walk back out; during countdown and
+                // combat the arena remains closed to avoid invalid results.
+                if (plugin.getConfig().getBoolean("access.walk-out-while-waiting", true)
+                        && !plugin.duels().isCountingDown(player)
+                        && !plugin.duels().isFighting(player)) {
+                    plugin.duels().leave(player, false);
+                    event.setTo(player.getLocation());
+                } else event.setTo(event.getFrom());
+            }
             return;
         }
         Room entered = plugin.rooms().at(event.getTo());
