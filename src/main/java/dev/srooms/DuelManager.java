@@ -260,10 +260,12 @@ public final class DuelManager {
                 return;
             }
             spawn = match == null ? firstSpawn : secondSpawn;
-        } else if (enteredAt == null || !room.contains(enteredAt)) {
-            // Players first cross the crystal doorway, which is INSIDE the
-            // room.  validSpawn excludes the glass area and wrongly rejected
-            // perfectly valid walk-in entries at this exact boundary.
+        } else if (!RoomEntryRules.canWalkIn(
+                room.contains(enteredAt), room.gate().contains(enteredAt))) {
+            // This path is only for manual attempts from OUTSIDE the room.
+            // PlayerMoveEvent already passes a room-contained destination,
+            // including the selected crystal doorway.
+            plugin.msg(player, "room-enter-walking", "room", room.name());
             return;
         }
         // When someone was already inside a room (e.g. after a restart),
