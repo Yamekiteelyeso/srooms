@@ -74,6 +74,8 @@ public final class ConfigMenu implements Listener {
                 "&7entrar en la región de la room.",
                 "&aSiempre activado (no necesita comando)"));
         toggle(menu, 17, Material.PAPER, "Bloquear comandos", room.blockCommands(), "Desactiva comandos durante el duelo");
+        toggle(menu, 18, Material.ENDER_EYE, "Teletransporte al entrar", room.teleportOnJoin(),
+                "OFF: luchar donde entras caminando / ON: mover a los spawns");
         toggle(menu, 27, Material.ENDER_PEARL, "Bloquear teletransporte", room.blockEnderPearls(), "Impide ender pearls y chorus fruit");
         toggle(menu, 28, Material.ICE, "Congelar inicio", room.freezeCountdown(), "Impide moverse en la cuenta atrás");
         toggle(menu, 30, Material.LEVER, "Room habilitada", room.enabled(), "Activa o desactiva nuevos combates");
@@ -116,8 +118,8 @@ public final class ConfigMenu implements Listener {
                 "&7Límite: &f" + room.duelDuration() + " segundos", "&eClic: -30s"));
         menu.setItem(36, item(Material.CLOCK, "&a+30 segundos de combate",
                 "&7Límite: &f" + room.duelDuration() + " segundos", "&eClic: +30s"));
-        menu.setItem(38, item(Material.REDSTONE, "&c-1 segundo", "&7Countdown actual: &f" + room.countdown() + " s"));
-        menu.setItem(40, item(Material.EMERALD, "&a+1 segundo", "&7Countdown actual: &f" + room.countdown() + " s"));
+        menu.setItem(38, item(Material.REDSTONE, "&c-1 segundo", "&7Countdown actual: &f" + room.countdown() + " s", "&7A 0 segundos se pelea al entrar el segundo."));
+        menu.setItem(40, item(Material.EMERALD, "&a+1 segundo", "&7Countdown actual: &f" + room.countdown() + " s", "&70 = combate inmediato."));
         menu.setItem(42, item(Material.LIME_BED, "&aSpawn jugador 1",
                 "&7Ubícate dentro de la room, fuera del cristal",
                 "&7Y haz clic para guardar la posición"));
@@ -152,6 +154,7 @@ public final class ConfigMenu implements Listener {
             case 15 -> room.clearEffects(!room.clearEffects());
             case 16 -> changed = false; // Entry is the core mechanic, not a room modifier.
             case 17 -> room.blockCommands(!room.blockCommands());
+            case 18 -> room.teleportOnJoin(!room.teleportOnJoin());
             case 27 -> room.blockEnderPearls(!room.blockEnderPearls());
             case 28 -> room.freezeCountdown(!room.freezeCountdown());
             case 30 -> room.enabled(!room.enabled());
