@@ -135,7 +135,8 @@ public final class RoomRegistry {
                 // Old rooms shipped with countdown=5 by default.
                 // Upgrade that legacy default to instant PvP; retain custom values.
                 int savedCountdown = s.getInt("countdown", 5);
-                room.countdown(savedCountdown == 5 ? 0 : savedCountdown);
+                boolean migrated = s.getBoolean("countdown-policy-v2", false);
+                room.countdown(!migrated && savedCountdown == 5 ? 0 : savedCountdown);
                 room.reopenDelay(s.getInt("reopen-delay", 10));
                 room.duelDuration(s.getInt("duel-duration", plugin.getConfig().getInt("defaults.duel-duration-seconds", 300)));
                 // Migrate old rooms with walk-in=false: entering physically is now mandatory.
@@ -185,6 +186,7 @@ public final class RoomRegistry {
             yaml.set(base + ".heal-on-join", room.healOnJoin());
             yaml.set(base + ".clear-effects", room.clearEffects());
             yaml.set(base + ".countdown", room.countdown());
+            yaml.set(base + ".countdown-policy-v2", true);
             yaml.set(base + ".reopen-delay", room.reopenDelay());
             yaml.set(base + ".duel-duration", room.duelDuration());
             yaml.set(base + ".walk-in", room.walkIn());
