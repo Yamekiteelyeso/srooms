@@ -265,7 +265,10 @@ public final class GameListener implements Listener {
             boolean crossedBoundary = !entered.contains(event.getFrom());
             // Staff can crouch to inspect/setup an idle arena without joining.
             boolean editing = player.hasPermission("srooms.admin") && player.isSneaking();
-            if (crossedBoundary && !editing) {
+            // Guests who were already inside a room when it was configured
+            // or reloaded can join by moving, without leaving and re-entering.
+            boolean entryMovement = crossedBoundary || !player.hasPermission("srooms.admin");
+            if (entryMovement && !editing) {
                 // Walking inside is always the way to join (even when older
                 // rooms.yml files had walk-in=false).
                 if (entered.enabled() && player.hasPermission("srooms.use")
