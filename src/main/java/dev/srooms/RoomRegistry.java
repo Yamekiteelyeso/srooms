@@ -37,8 +37,8 @@ public final class RoomRegistry {
         // Every new room is available immediately by walking inside it.
         // Optional gameplay modifiers start disabled; admins opt in as needed.
         room.walkIn(true);
-        room.teleportOnJoin(false);
-        room.countdown(0);
+        room.teleportOnJoin(plugin.getConfig().getBoolean("defaults.teleport-on-join", false));
+        room.countdown(plugin.getConfig().getInt("defaults.countdown-seconds", 0));
         room.enabled(true);
         room.keepInventory(plugin.getConfig().getBoolean("defaults.keep-inventory", false));
         room.keepExperience(plugin.getConfig().getBoolean("defaults.keep-experience", false));
