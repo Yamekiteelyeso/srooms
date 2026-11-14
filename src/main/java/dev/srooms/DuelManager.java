@@ -421,11 +421,14 @@ public final class DuelManager {
                 return;
             }
             if (instant) {
-                // With instant PvP the glass is only a brief visual signal:
-                // players can fight immediately, without a forced countdown.
-                Bukkit.getScheduler().runTaskLater(plugin, () -> {
-                    if (matches.get(roomKey(match.room)) == match) openGate(match.room);
-                }, 1L);
+                // Default: crystal closes the entrance and remains until
+                // the duel ends. Arena owners may choose the old separator
+                // behavior and open it when combat starts.
+                if (match.room.openCrystalOnFight()) {
+                    Bukkit.getScheduler().runTaskLater(plugin, () -> {
+                        if (matches.get(roomKey(match.room)) == match) openGate(match.room);
+                    }, 1L);
+                }
             } else startCountdown(match);
         });
     }
@@ -463,7 +466,7 @@ public final class DuelManager {
                     return;
                 }
                 if (remaining == 0) {
-                    openGate(match.room);
+                    if (match.room.openCrystalOnFight()) openGate(match.room);
                     announceFight(match);
                     cancel();
                     return;
