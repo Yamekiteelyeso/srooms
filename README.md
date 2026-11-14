@@ -12,7 +12,7 @@ Entra **caminando** a la región seleccionada de la room y pelea **en tu posici�
 
 1. El jugador 1 entra en la room; se muestra `1/2`, pero **no se coloca ningún cristal**.
 2. El jugador 2 entra andando; el contador pasa a `2/2`. El plugin confirma que ambos están físicamente dentro antes de colocar el cristal.
-3. **Cuenta regresiva 0 segundos por defecto:** el combate se activa inmediatamente y el cristal solo aparece como una señal breve (se retira al siguiente tick, ya que una barrera permanente impediría pelear). Si activas 1–30 segundos de cuenta regresiva desde el menú, el cristal permanece mientras dura la espera y se abre al empezar la pelea.
+3. **Cuenta regresiva 0 segundos por defecto:** el combate se activa inmediatamente y el cristal **permanece puesto hasta terminar la pelea**, para cerrar la entrada y evitar que entren terceros. Si utilizas el cristal como **separador entre ambos jugadores**, activa **Abrir cristal al pelear** en `/srooms roomconfig <room>`, y se retirará al comenzar el combate (en modo instantáneo, un tick después de aparecer).
 4. Al acabar, se restauran los bloques originales del cristal. Durante el tiempo de espera de un solo jugador y la reapertura **no se generan barreras nuevas**.
 
 **Prevención de bucles:** sin TP, los participantes que terminaron un duelo deben salir de la room y volver a entrar para inscribirse otra vez. Al esperar rival puedes salir caminando. Los spawns son **opcionales** cuando el teletransporte está apagado.
@@ -24,6 +24,7 @@ Config global de las rooms nuevas:
 ```yaml
 defaults:
   teleport-on-join: false
+  open-crystal-on-fight: false
   countdown-seconds: 0
 duel:
   countdown-preparation-ticks: 0
