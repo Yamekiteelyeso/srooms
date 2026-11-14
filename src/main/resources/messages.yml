@@ -1,4 +1,4 @@
-# SRooms 1.3.2 | Personaliza todos los mensajes de chat.
+# SRooms 1.3.3 | Personaliza todos los mensajes de chat.
 # Colores Minecraft: &0 - &f, &l (negrita), &r (reiniciar).
 # Variables disponibles según mensaje: %room%, %winner%, %loser%, %seconds%, %players%, %status%, %keep%, %point%, %stage%, %coords%, %reason%.
 prefix: '&8[&b&lSRooms&8] &7'
@@ -13,13 +13,13 @@ already-in-room: '&eYa estás participando en una room.'
 not-in-room: '&cNo estás participando en ninguna room.'
 room-busy: '&c%room% &7está llena: &f2/2 jugadores&7. No puedes entrar.'
 room-reopening: '&e%room% &7se reabre en &f%seconds%s&7. Espera un momento.'
-intruder-ejected: '&cAcceso denegado. &7Entra a &f%room% &7con &f/srooms join %room%&7.'
+intruder-ejected: '&cNo puedes entrar a &f%room% &cahora. &7Si está libre, entra caminando; si está ocupada, espera.'
 invalid-seconds: '&cTiempo inválido. &7Utiliza un número de &f0 a 300 segundos&7.'
 gate-unsafe: '&cEl cristal seleccionado contiene bloques con datos. Cámbialo.'
 
 # Ayuda
 help-title: '&b&lSRooms &8» &fCentro de comandos &7(1v1)'
-help-player: '&7/srooms gui &8• &fmenú &8| &7/srooms join <room> &8• &fentrar &8| &7/srooms leave &8• &fsalir &8| &7/srooms stats &8• &festadísticas &8| &7/srooms top elo &8• &franking &8| &7/srooms history &8• &fhistorial'
+help-player: '&aPara entrar a una room simplemente camina dentro de ella. &7/srooms gui &8• &fmenú &8| &7/srooms leave &8• &fsalir &8| &7/srooms stats &8• &fstats &8| &7/srooms top elo &8• &franking'
 help-admin: '&7/srooms createroom &8• &fcrear &8| &7/srooms nameroom <nombre> &8• &fguardar &8| &7/srooms roomconfig <room> &8• &fconfigurar'
 help-admin-two: '&7/srooms kit save <room> &8• &fguardar kit &8| &7/srooms setexit &8• &fsalida &8| &7/srooms reset <room> &8• &freiniciar &8| &7/srooms check <room> &8• &fcomprobar &8| &7/srooms reload &8• &frecargar'
 usage-name: '&cUso: &f/srooms nameroom <nombre>'
@@ -30,7 +30,7 @@ usage-join: '&cUso: &f/srooms join <nombre>'
 usage-info: '&cUso: &f/srooms info <nombre>'
 
 # Administracion
-room-created: '&aRoom &f%room% &acreada correctamente. &7Configúrala con &f/srooms roomconfig %room%&7.'
+room-created: '&aRoom &f%room% &acreada. &7Los jugadores pueden entrar &acaminando&7, sin comandos. Configúrala con &f/srooms roomconfig %room%&7.'
 room-deleted: '&aLa room &f%room% &ase eliminó correctamente.'
 reopen-configured: '&aReapertura de &f%room%&a: &f%seconds% segundos&a.'
 selection-room: '&fPaso &b1/2 &8• &7Marca la room con la hacha de oro: &fizquierdo = punto 1&7, luego &fderecho = punto 2&7.'
