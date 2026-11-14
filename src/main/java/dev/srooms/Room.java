@@ -39,6 +39,7 @@ public final class Room {
     private int duelDuration = 300;
     private boolean walkIn = true;
     private boolean teleportOnJoin = false;
+    private boolean openCrystalOnFight = false;
     private boolean blockCommands = false;
     private boolean blockEnderPearls = false;
     private boolean freezeCountdown = false;
@@ -137,6 +138,8 @@ public final class Room {
     public void reopenDelay(int seconds) { reopenDelay = Math.max(0, Math.min(300, seconds)); }
     public int duelDuration() { return duelDuration; }
     public void duelDuration(int value) { duelDuration = Math.max(30, Math.min(1800, value)); }
+    public boolean openCrystalOnFight() { return openCrystalOnFight; }
+    public void openCrystalOnFight(boolean value) { openCrystalOnFight = value; }
     public boolean teleportOnJoin() { return teleportOnJoin; }
     public void teleportOnJoin(boolean value) { teleportOnJoin = value; }
     public boolean walkIn() { return walkIn; }
