@@ -85,7 +85,7 @@ build-limit: '&cNo puedes modificar ese bloque. &7Límite de cambios alcanzado o
 # 1.2.1 - Diagnostico y recuperacion
 usage-check: '&cUso: &f/srooms check <nombre>'
 usage-repair: '&cUso: &f/srooms repair <nombre>'
-room-check-ok: '&aLa room &f%room% &apasó las comprobaciones: regiones, spawns y cristal.'
+room-check-ok: '&aLa room &f%room% &apasó las comprobaciones: región y cristal (spawns solo si hay TP).'
 room-check-error: '&cRoom &f%room%&c: &7%reason%'
 room-repaired: '&aSe restauraron los bloques originales de la barrera de &f%room%&a.'
 room-no-recovery: '&eNo hay ninguna barrera pendiente de recuperación en &f%room%&e.'
