@@ -398,6 +398,17 @@ public final class DuelManager {
                 finish(match, null, false);
                 return;
             }
+            // Never spawn glass inside a participant's feet or head.
+            // Fighting continues without the barrier if the selection is unsafe.
+            if (match.room.gate().contains(first.getLocation())
+                    || match.room.gate().contains(first.getLocation().clone().add(0, 1, 0))
+                    || match.room.gate().contains(second.getLocation())
+                    || match.room.gate().contains(second.getLocation().clone().add(0, 1, 0))) {
+                plugin.getLogger().warning("Cristal de " + match.room.name()
+                        + " solapa un jugador; se omite para evitar asfixia.");
+                if (!instant) announceFight(match);
+                return;
+            }
             if (!closeGate(match.room)) {
                 plugin.getLogger().warning("No se pudo colocar el cristal en " + match.room.name());
                 // Fight can proceed even if writing recovery failed; never
