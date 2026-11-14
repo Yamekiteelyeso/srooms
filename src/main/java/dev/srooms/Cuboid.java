@@ -58,6 +58,22 @@ public final class Cuboid {
     public int minY() { return minY; } public int maxY() { return maxY; }
     public int minZ() { return minZ; } public int maxZ() { return maxZ; }
 
+    /**
+     * Ground-level corner clicks select a horizontal footprint. For arenas
+     * whose selection is only 1–2 blocks tall, grow upward so players'
+     * standing coordinates and both automatic spawn locations fit inside.
+     * Explicitly taller cuboids keep their exact vertical bounds.
+     */
+    public Cuboid withMinimumArenaHeight(int requiredHeight) {
+        int current = maxY - minY + 1;
+        if (current > 2 || requiredHeight <= current) return this;
+        World loaded = world();
+        if (loaded == null) return this;
+        int target = Math.max(3, Math.min(64, requiredHeight));
+        int top = Math.min(loaded.getMaxHeight() - 1, minY + target - 1);
+        return new Cuboid(worldName, minX, maxX, minY, top, minZ, maxZ);
+    }
+
     public long volume() {
         return ((long) maxX - minX + 1L) * ((long) maxY - minY + 1L)
                 * ((long) maxZ - minZ + 1L);
