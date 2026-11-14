@@ -143,3 +143,4 @@ room-spawns-invalid: '&cLa room &f%room% &cno tiene dos spawns válidos y separa
 room-walk-in: '&ePara entrar a &f%room% &esolo camina dentro de la arena. &7No hace falta un comando.'
 room-reenter: '&eSal de &f%room% &ey vuelve a entrar caminando para participar en otro combate.'
 duel-start-title: '&c&l¡PELEA!'
+room-clearing: '&eLa room &f%room% &eestá terminando la pelea anterior. &7Espera a que salgan los jugadores anteriores.'
