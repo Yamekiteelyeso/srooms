@@ -68,7 +68,7 @@ public final class RoomCommands implements CommandExecutor, TabCompleter {
                 if (validation == null && room.teleportOnJoin()) {
                     org.bukkit.Location a = room.spawnA();
                     org.bukkit.Location b = room.spawnB();
-                    if (a == null || b == null) validation = "Falta un spawn seguro (A o B).";
+                    if (a == null || b == null) validation = "El TP opcional no encontró dos puntos seguros automáticos. Desactiva el TP o cambia el cristal.";
                     else if (!room.validSpawn(a) || !room.validSpawn(b))
                         validation = "Los dos spawns deben estar dentro de la room y fuera del cristal.";
                     else if (a.getWorld().equals(b.getWorld()) && a.distanceSquared(b) < 1)
